@@ -22,7 +22,7 @@ export const Header = () => {
         <Link href="/" passHref>
           <div className="flex items-center gap-2 cursor-pointer">
             <Image
-              src="/logo.svg" // Asegúrate de tener tu logo en la carpeta /public
+              src="/Starklotto.png" // Asegúrate de tener tu logo en la carpeta /public
               alt="StarkLotto Logo"
               width={40}
               height={40}
