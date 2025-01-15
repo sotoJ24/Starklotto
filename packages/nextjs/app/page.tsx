@@ -8,18 +8,14 @@ const Home = () => {
       <div className="px-5">
         <h1 className="text-center">
           <span className="block text-2xl mb-2">Welcome to</span>
-          <span className="block text-4xl font-bold">Scaffold-Stark 2</span>
+          <span className="block text-4xl font-bold">StarkLotto</span>
         </h1>
         <ConnectedAddress />
         <p className="text-center text-lg">
-          Edit your smart contract{" "}
-          <code className="bg-underline italic text-base font-bold max-w-full break-words break-all inline-block">
-            YourContract.cairo
-          </code>{" "}
-          in{" "}
-          <code className="bg-underline italic text-base font-bold max-w-full break-words break-all inline-block">
-            packages/snfoundry/contracts/src
-          </code>
+          The most innovative decentralized lottery on the StarkNet blockchain.
+        </p>
+        <p className="text-center text-lg">
+        Play, win, and be part of the future of digital lotteries.
         </p>
       </div>
 
