@@ -7,7 +7,6 @@ const ContactUsPage = () => {
       <h1 className="text-4xl font-bold">Contact Us</h1>
       <p className="mt-4 text-lg">Have any questions? Reach out to us!</p>
       <form className="mt-8 max-w-md mx-auto bg-[#1A1A1A] p-4 rounded">
-        {/* Full Name */}
         <div className="mb-4">
           <label className="flex items-center text-left mb-2" htmlFor="fullName">
             Full Name
@@ -22,7 +21,6 @@ const ContactUsPage = () => {
           />
         </div>
 
-        {/* Email Address */}
         <div className="mb-4">
           <label className="flex items-center text-left mb-2" htmlFor="email">
             Email Address
@@ -37,7 +35,6 @@ const ContactUsPage = () => {
           />
         </div>
 
-        {/* Your Message */}
         <div className="mb-4">
           <label className="flex items-center text-left mb-2" htmlFor="message">
             Your Message
@@ -52,7 +49,6 @@ const ContactUsPage = () => {
           />
         </div>
 
-        {/* Submit Button */}
         <button type="submit" className="bg-gradient-to-r from-[#3A0909] to-[#000000] text-white py-2 px-4 rounded">
           Send Message
         </button>
