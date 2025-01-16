@@ -1,12 +1,19 @@
-import React from "react";
+import HowItWorks from './_components/HowItWorks';
+import UpcomingDraws from './_components/UpcomingDraws';
+import CurrentJackpot from './_components/CurrentJackpot';
 
 const HowItWorksPage = () => {
   return (
-    <div className="text-white text-center py-20">
-      <h1 className="text-4xl font-bold">How It Works</h1>
-      <p className="mt-4 text-lg">
-        Learn how to participate and win amazing prizes with StarkLotto!
-      </p>
+    <div className="min-h-screen text-white">
+      <div className="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="flex flex-col">
+          <HowItWorks />
+          <UpcomingDraws />
+        </div>
+        <div className="flex flex-col">
+          <CurrentJackpot />
+        </div>
+      </div>
     </div>
   );
 };
