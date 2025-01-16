@@ -46,7 +46,6 @@ export const Header = () => {
         <Link href="/" passHref>
           <div className="flex items-center gap-2 cursor-pointer">
             <Image
-              src="/logo.svg"
               alt="StarkLotto Logo"
               width={40}
               height={40}
