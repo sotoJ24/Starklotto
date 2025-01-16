@@ -16,7 +16,7 @@ body {
   background-size: cover;
   font-family: "Inter", sans-serif;
   color: white;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 h1,
@@ -37,6 +37,8 @@ p {
 
 html {
   @apply overflow-y-scroll overflow-x-hidden;
+  -ms-overflow-style: none;  /* para IE y Edge */
+  scrollbar-width: none;  /* para Firefox */
 }
 
 body {
@@ -174,4 +176,26 @@ body {
 
 .animate-fade-in {
   animation: fade-in 1.5s ease-out forwards;
+}
+
+@keyframes carousel {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-carousel {
+  animation: carousel 30s linear infinite;
+  animation-play-state: running;
+}
+
+.animate-carousel:hover {
+  animation-play-state: paused;
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
