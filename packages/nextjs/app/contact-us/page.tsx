@@ -1,5 +1,9 @@
 import React from "react";
-import { UserIcon, EnvelopeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+import {
+  UserIcon,
+  EnvelopeIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/24/outline";
 
 const ContactUsPage = () => {
   return (
@@ -8,7 +12,10 @@ const ContactUsPage = () => {
       <p className="mt-4 text-lg">Have any questions? Reach out to us!</p>
       <form className="mt-8 max-w-md mx-auto bg-[#1A1A1A] p-4 rounded">
         <div className="mb-4">
-          <label className="flex items-center text-left mb-2" htmlFor="fullName">
+          <label
+            className="flex items-center text-left mb-2"
+            htmlFor="fullName"
+          >
             Full Name
             <UserIcon className="h-5 w-5 text-white ml-2" />
           </label>
@@ -49,7 +56,10 @@ const ContactUsPage = () => {
           />
         </div>
 
-        <button type="submit" className="bg-gradient-to-r from-[#3A0909] to-[#000000] text-white py-2 px-4 rounded">
+        <button
+          type="submit"
+          className="bg-gradient-to-r from-[#3A0909] to-[#000000] text-white py-2 px-4 rounded"
+        >
           Send Message
         </button>
       </form>
