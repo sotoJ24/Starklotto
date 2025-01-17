@@ -48,11 +48,10 @@ export const Header = () => {
             <Image
               src="/Starklotto.png"
               alt="StarkLotto Logo"
-              width={40}
-              height={40}
+              width={131}
+              height={110}
               className="rounded-full"
             />
-            <span className="text-white text-xl font-bold">STARKLOTTO</span>
           </div>
         </Link>
 

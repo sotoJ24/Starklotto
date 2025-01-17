@@ -26,26 +26,26 @@ export const erc20ABI = [
 export async function getTxVersion(
   network: Network,
   feeToken: string,
-  isSierra?: boolean,
+  isSierra?: boolean
 ) {
   const { feeToken: feeTokenOptions, provider, deployer } = network;
 
   //check the specified feeToken
   const specifiedToken = feeTokenOptions.find(
-    (token) => token.name === feeToken,
+    (token) => token.name === feeToken
   );
   if (specifiedToken) {
     const balance = await getBalance(
       deployer.address,
       provider,
-      specifiedToken.address,
+      specifiedToken.address
     );
     if (balance > 0n) {
       console.log(yellow(`Using ${feeToken.toUpperCase()} as fee token`));
       return getTxVersionFromFeeToken(feeToken, isSierra);
     }
     console.log(
-      red(`${feeToken.toUpperCase()} balance is zero, trying other options`),
+      red(`${feeToken.toUpperCase()} balance is zero, trying other options`)
     );
   }
 
@@ -55,22 +55,22 @@ export async function getTxVersion(
       const balance = await getBalance(
         deployer.address,
         provider,
-        token.address,
+        token.address
       );
       if (balance > 0n) {
         console.log(yellow(`Using ${token.name.toUpperCase()} as fee token`));
         return getTxVersionFromFeeToken(token.name, isSierra);
       }
       console.log(
-        red(`${token.name.toUpperCase()} balance is zero, trying next option`),
+        red(`${token.name.toUpperCase()} balance is zero, trying next option`)
       );
     }
   }
 
   console.error(
     red(
-      "Error: Unable to find a fee token with sufficient balance. Please fund your wallet first.",
-    ),
+      "Error: Unable to find a fee token with sufficient balance. Please fund your wallet first."
+    )
   );
   throw new Error("No fee token with balance found");
 }
@@ -78,7 +78,7 @@ export async function getTxVersion(
 export async function getBalance(
   account: string,
   provider: Provider,
-  tokenAddress: string,
+  tokenAddress: string
 ): Promise<bigint> {
   try {
     const contract = new Contract(erc20ABI, tokenAddress, provider);
@@ -94,8 +94,8 @@ function getTxVersionFromFeeToken(feeToken: string, isSierra?: boolean) {
   return feeToken === "strk"
     ? TransactionVersion.V3
     : isSierra
-      ? TransactionVersion.V2
-      : TransactionVersion.V1;
+    ? TransactionVersion.V2
+    : TransactionVersion.V1;
 }
 
 /**

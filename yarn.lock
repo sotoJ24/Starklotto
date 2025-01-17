@@ -618,6 +618,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hookform/resolvers@npm:^3.10.0":
+  version: 3.10.0
+  resolution: "@hookform/resolvers@npm:3.10.0"
+  peerDependencies:
+    react-hook-form: ^7.0.0
+  checksum: e062f10bebff696a669fe37388f64f6b7c322eb524e99008c0e157e7adf68d2cee4d86fce1a7304a80d7f6fdd6d92facc37320a539cb195235a31a680415760c
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.13.0":
   version: 0.13.0
   resolution: "@humanwhocodes/config-array@npm:0.13.0"
@@ -851,7 +860,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/curves@npm:^1.4.0, @noble/curves@npm:^1.6.0, @noble/curves@npm:~1.8.0":
+"@noble/curves@npm:^1.6.0, @noble/curves@npm:~1.8.0":
   version: 1.8.0
   resolution: "@noble/curves@npm:1.8.0"
   dependencies:
@@ -2373,6 +2382,7 @@ __metadata:
   resolution: "@ss-2/nextjs@workspace:packages/nextjs"
   dependencies:
     "@heroicons/react": ^2.1.3
+    "@hookform/resolvers": ^3.10.0
     "@radix-ui/react-icons": 1.3.0
     "@radix-ui/themes": 2.0.3
     "@scaffold-stark/stark-burner": 0.1.8
@@ -2409,6 +2419,7 @@ __metadata:
     react: ^18
     react-copy-to-clipboard: ^5.1.0
     react-dom: ^18
+    react-hook-form: ^7.54.2
     react-hot-toast: ^2.4.1
     starknet: 6.12.1
     tailwindcss: ^3.3.0
@@ -2419,6 +2430,7 @@ __metadata:
     vitest: ^2.1.1
     webpack: ^5.97.1
     webpack-cli: ^6.0.1
+    zod: ^3.24.1
     zustand: ^4.1.2
   languageName: unknown
   linkType: soft
@@ -2529,8 +2541,8 @@ __metadata:
   linkType: hard
 
 "@testing-library/react@npm:^16.0.1":
-  version: 16.1.0
-  resolution: "@testing-library/react@npm:16.1.0"
+  version: 16.2.0
+  resolution: "@testing-library/react@npm:16.2.0"
   dependencies:
     "@babel/runtime": ^7.12.5
   peerDependencies:
@@ -2544,7 +2556,7 @@ __metadata:
       optional: true
     "@types/react-dom":
       optional: true
-  checksum: 5dc8e7abda23d108c29f43cdacd43fad750e981ee87ee8902fb349a2683f2f774ef1136f2d3ef3d9efb87e8b04426c43d7b46e95511cd7c9d37b10c3bdd3e9e2
+  checksum: 4a687200e4d5dc7c7bd83c01f847a26e2c78f08acf54e5dbde8132969221401c6c595f624f5bd47e758346edc5f516d0bb07bffaae8a2e149910343eed4ae39f
   languageName: node
   linkType: hard
 
@@ -2685,11 +2697,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 22.10.6
-  resolution: "@types/node@npm:22.10.6"
+  version: 22.10.7
+  resolution: "@types/node@npm:22.10.7"
   dependencies:
     undici-types: ~6.20.0
-  checksum: 3bf26c7df8b7f0085f7a53d1f4ee124f8af01c7e4c072c3c10ec0ba91a03611fce124fed279f512b1ff259835bee5589e02f1ba0914ca6b372a7f99aef5faa3c
+  checksum: 2dce6c75c607c6269744f1ea2b5296e8685cd71d0dd5c599c3029626f9d2dc8b037912495cf68b30d6f39f44d3fa8b025e179662ef16dc363e0658425bedfde8
   languageName: node
   linkType: hard
 
@@ -2710,11 +2722,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:^20":
-  version: 20.17.13
-  resolution: "@types/node@npm:20.17.13"
+  version: 20.17.14
+  resolution: "@types/node@npm:20.17.14"
   dependencies:
     undici-types: ~6.19.2
-  checksum: 7a8deb319e7d93f756b29f8b079d6040e0ca1e22342f83cfbe15fbe69faa175edb32d7c6b97805a6df3d8c6f3817ca49b979039579ccd8fab4d2b4f9e4f6d024
+  checksum: a5a775f57271e5a73c9e1afc4f6ea0d24cb9b4856e3d7d1788ff9ba0cc3e3a90e7883383f183f193a36eed0c758809df626a9ad653458a06d4fc82644d89b6e0
   languageName: node
   linkType: hard
 
@@ -4821,9 +4833,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.73":
-  version: 1.5.82
-  resolution: "electron-to-chromium@npm:1.5.82"
-  checksum: 9d438663cc8d687ff5c00b775d12e4107010a806cdfe8ebdc8664b12426b740bd719f9208963b045b6ca122991e9ddf891a623482cbeda7c61ecff3cf40b556d
+  version: 1.5.83
+  resolution: "electron-to-chromium@npm:1.5.83"
+  checksum: 729fb2eb63bee7a6ae68c19288412ff6a3cdc0a8f566e18ee37e92f3b4ce4f6cb84818d039646f323ab11d6571d4e2a1ae36724b5666280a0b82888769a8330f
   languageName: node
   linkType: hard
 
@@ -8116,9 +8128,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ox@npm:0.6.0":
-  version: 0.6.0
-  resolution: "ox@npm:0.6.0"
+"ox@npm:0.6.5":
+  version: 0.6.5
+  resolution: "ox@npm:0.6.5"
   dependencies:
     "@adraffy/ens-normalize": ^1.10.1
     "@noble/curves": ^1.6.0
@@ -8132,7 +8144,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 7d4bbdcadc5e62290e34767a0f1b5fdd7d3bd3e6db7fc5a5d7f42cc4b55d39aa4e1228196711179b764392320dd2f211b963c710efd6bc45a1ae648596ec9df9
+  checksum: 2ad755c09652561c71f5d76e8af1d106fb2c09a2a61c3e606fb107dea5e436027438884968f995f4a5d2a8dc5608bd44c54931a2f4385c9db63340f7e1138e21
   languageName: node
   linkType: hard
 
@@ -8652,6 +8664,15 @@ __metadata:
   peerDependencies:
     react: ^18.3.1
   checksum: 298954ecd8f78288dcaece05e88b570014d8f6dce5db6f66e6ee91448debeb59dcd31561dddb354eee47e6c1bb234669459060deb238ed0213497146e555a0b9
+  languageName: node
+  linkType: hard
+
+"react-hook-form@npm:^7.54.2":
+  version: 7.54.2
+  resolution: "react-hook-form@npm:7.54.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17 || ^18 || ^19
+  checksum: 49a867ece9894dca82f6552e5eefd012b7db962c56a7543f9275ae0b6ec202d549973c3694e7f97436afc2396549cb8fc8777241dd660b71793547aa9c8e5686
   languageName: node
   linkType: hard
 
@@ -10539,8 +10560,8 @@ __metadata:
   linkType: hard
 
 "viem@npm:^2.21.1":
-  version: 2.22.8
-  resolution: "viem@npm:2.22.8"
+  version: 2.22.9
+  resolution: "viem@npm:2.22.9"
   dependencies:
     "@noble/curves": 1.7.0
     "@noble/hashes": 1.6.1
@@ -10548,15 +10569,14 @@ __metadata:
     "@scure/bip39": 1.5.0
     abitype: 1.0.7
     isows: 1.0.6
-    ox: 0.6.0
-    webauthn-p256: 0.0.10
+    ox: 0.6.5
     ws: 8.18.0
   peerDependencies:
     typescript: ">=5.0.4"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: f2aecb3204b7aca3e39a45586877b3d8a6a24db6ac7d93dad75708d5a274e622253929abd5353ec1a5205b6c24913a93fe01b8c1ab7b716c31f78cce288ee9f2
+  checksum: 11cd72679ed224cc6d8c2c1967f461b7ad5ae9723c45c1688cc37190a05f08ed72cf5114efe653f38446c69e3bec2974b4f0f610913cef1a25fa20087de90599
   languageName: node
   linkType: hard
 
@@ -10691,16 +10711,6 @@ __metadata:
   version: 0.2.4
   resolution: "web-vitals@npm:0.2.4"
   checksum: 128a4e87730b0a02fb6af3eef7d31f9a79b4646e83cfe4465aa8ce6054fe16f7b1f4125a384f1b4f039091bd9513cb54b4e559c0b10ae953c01900786a16b1c2
-  languageName: node
-  linkType: hard
-
-"webauthn-p256@npm:0.0.10":
-  version: 0.0.10
-  resolution: "webauthn-p256@npm:0.0.10"
-  dependencies:
-    "@noble/curves": ^1.4.0
-    "@noble/hashes": ^1.4.0
-  checksum: 0648a3d78451bfa7105b5151a34bd685ee60e193be9be1981fe73819ed5a92f410973bdeb72427ef03c8c2a848619f818cf3e66b94012d5127b462cb10c24f5d
   languageName: node
   linkType: hard
 
@@ -11155,7 +11165,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.22.4":
+"zod@npm:^3.22.4, zod@npm:^3.24.1":
   version: 3.24.1
   resolution: "zod@npm:3.24.1"
   checksum: dcd5334725b29555593c186fd6505878bb7ccb4f5954f728d2de24bf71f9397492d83bdb69d5b8a376eb500a02273ae0691b57deb1eb8718df3f64c77cc5534a
