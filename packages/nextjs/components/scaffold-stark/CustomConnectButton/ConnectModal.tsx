@@ -7,12 +7,12 @@ import { useTheme } from "next-themes";
 import { BlockieAvatar } from "../BlockieAvatar";
 import GenericModal from "./GenericModal";
 import { LAST_CONNECTED_TIME_LOCALSTORAGE_KEY } from "~~/utils/Constants";
-
+import {WalletIcon} from "@heroicons/react/24/outline";
 const loader = ({ src }: { src: string }) => {
   return src;
 };
 
-const ConnectModal = () => {
+const ConnectModal = ({ isHeader }: { isHeader: boolean }) => {
   const modalRef = useRef<HTMLInputElement>(null);
   const [isBurnerWallet, setIsBurnerWallet] = useState(false);
   const { resolvedTheme } = useTheme();
@@ -70,7 +70,13 @@ const ConnectModal = () => {
         htmlFor="connect-modal"
         className="rounded-[18px]  btn-sm font-bold px-8 bg-btn-wallet py-3 cursor-pointer"
       >
-        <span>Connect</span>
+        <span>
+          {isHeader ? (
+            <WalletIcon className="h-6 w-6 text-white" />
+          ) : (
+            "Connect Wallet to Start Playing"
+          )}
+        </span>
       </label>
 
       <input

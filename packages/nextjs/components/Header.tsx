@@ -9,6 +9,7 @@ import {
   Bars3Icon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { CustomConnectButton } from "./scaffold-stark/CustomConnectButton";
 
 const menuLinks = [
   { label: "Home", href: "/" },
@@ -73,7 +74,7 @@ export const Header = () => {
         {/* Icons */}
         <div className="hidden md:flex items-center space-x-4">
           <button className="p-2 bg-transparent hover:bg-gray-700 rounded-full transition">
-            <WalletIcon className="h-6 w-6 text-white" />
+          <CustomConnectButton isHeader={true} />          
           </button>
           <button className="p-2 bg-transparent hover:bg-gray-700 rounded-full transition">
             <UserIcon className="h-6 w-6 text-white" />
