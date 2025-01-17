@@ -37,8 +37,8 @@ p {
 
 html {
   @apply overflow-y-scroll overflow-x-hidden;
-  -ms-overflow-style: none;  /* para IE y Edge */
-  scrollbar-width: none;  /* para Firefox */
+  -ms-overflow-style: none; /* para IE y Edge */
+  scrollbar-width: none; /* para Firefox */
 }
 
 body {

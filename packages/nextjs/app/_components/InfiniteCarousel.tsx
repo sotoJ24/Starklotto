@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 function InfiniteCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const images = [
-    { id: 1, src: '/home_image_1.png', alt: 'Lottery 1' },
-    { id: 2, src: '/home_image_2.png', alt: 'Lottery 2' },
-    { id: 3, src: '/home_image_3.png', alt: 'Lottery 3' },
-    { id: 4, src: '/home_image_4.png', alt: 'Lottery 4' },
-    { id: 5, src: '/home_image_5.png', alt: 'Lottery 5' },
+    { id: 1, src: "/home_image_1.png", alt: "Lottery 1" },
+    { id: 2, src: "/home_image_2.png", alt: "Lottery 2" },
+    { id: 3, src: "/home_image_3.png", alt: "Lottery 3" },
+    { id: 4, src: "/home_image_4.png", alt: "Lottery 4" },
+    { id: 5, src: "/home_image_5.png", alt: "Lottery 5" },
   ];
 
-/*   const nextSlide = () => {
+  /*   const nextSlide = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
   };
 
@@ -24,14 +24,14 @@ function InfiniteCarousel() {
   return (
     <div className="relative group">
       <div className="overflow-hidden">
-        <div 
+        <div
           className="flex animate-carousel gap-4"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
           {/* First set of images */}
           {images.map((image) => (
             <div key={image.id} className="flex-none w-[calc(20%-16px)] h-48">
-              <img 
+              <img
                 src={image.src}
                 alt={image.alt}
                 className="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-300"
@@ -40,8 +40,11 @@ function InfiniteCarousel() {
           ))}
           {/* Duplicate set for infinite scroll effect */}
           {images.map((image) => (
-            <div key={`duplicate-${image.id}`} className="flex-none w-[calc(20%-16px)] h-48">
-              <img 
+            <div
+              key={`duplicate-${image.id}`}
+              className="flex-none w-[calc(20%-16px)] h-48"
+            >
+              <img
                 src={image.src}
                 alt={image.alt}
                 className="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-300"
@@ -52,7 +55,7 @@ function InfiniteCarousel() {
       </div>
 
       {/* Navigation Controls - Only visible on hover */}
-{/*       <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      {/*       <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <button 
           onClick={prevSlide}
           className="bg-white/30 hover:bg-white/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"

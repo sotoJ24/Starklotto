@@ -1,5 +1,5 @@
-import React from 'react';
-import InfiniteCarousel from './InfiniteCarousel';
+import React from "react";
+import InfiniteCarousel from "./InfiniteCarousel";
 
 function HotDeal() {
   return (

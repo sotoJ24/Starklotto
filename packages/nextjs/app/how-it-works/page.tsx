@@ -1,6 +1,6 @@
-import HowItWorks from './_components/HowItWorks';
-import UpcomingDraws from './_components/UpcomingDraws';
-import CurrentJackpot from './_components/CurrentJackpot';
+import HowItWorks from "./_components/HowItWorks";
+import UpcomingDraws from "./_components/UpcomingDraws";
+import CurrentJackpot from "./_components/CurrentJackpot";
 
 const HowItWorksPage = () => {
   return (
