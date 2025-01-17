@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 
 function InfiniteCarousel() {
@@ -31,11 +32,16 @@ function InfiniteCarousel() {
           {/* First set of images */}
           {images.map((image) => (
             <div key={image.id} className="flex-none w-[calc(20%-16px)] h-48">
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-300"
-              />
+              <div className="relative w-full h-64">
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  layout="responsive"
+                  width={100}
+                  height={100}
+                  className="object-cover rounded-lg hover:scale-105 transition-transform duration-300"
+                />
+              </div>
             </div>
           ))}
           {/* Duplicate set for infinite scroll effect */}
@@ -44,9 +50,12 @@ function InfiniteCarousel() {
               key={`duplicate-${image.id}`}
               className="flex-none w-[calc(20%-16px)] h-48"
             >
-              <img
+              <Image
                 src={image.src}
                 alt={image.alt}
+                layout="responsive"
+                width={100}
+                height={100}
                 className="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-300"
               />
             </div>

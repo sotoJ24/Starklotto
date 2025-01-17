@@ -1,6 +1,34 @@
 import React from "react";
 import Image from "next/image";
 
+const teamMembers = [
+  {
+    name: "Kimberly Cascante",
+    image: "/Kim.png",
+    github: "https://github.com/kimcascante",
+  },
+  {
+    name: "Jefferson Calderon",
+    image: "/Jeff.jpeg",
+    github: "https://github.com/xJeffx23",
+  },
+  {
+    name: "Joseph Poveda",
+    image: "/Joseph.jpeg",
+    github: "https://github.com/josephpdf/",
+  },
+  {
+    name: "Andrés Villanueva",
+    image: "/Andres.jpeg",
+    github: "https://github.com/drakkomaximo",
+  },
+  {
+    name: "David Melendez",
+    image: "/David.jpeg",
+    github: "https://github.com/davidmelendez",
+  },
+];
+
 const AboutUsPage = () => {
   return (
     <div className="text-white text-center py-20">
@@ -39,10 +67,10 @@ const AboutUsPage = () => {
           </div>
         </div>
         <div className="w-1/2 pl-8">
-          <h2 className="font-bold text-left mt-8 uppercase text-center mb-4">
+          <h2 className="font-bold mt-8 uppercase text-center mb-4">
             Meet the Minds Behind StarkLotto
           </h2>
-          <a href="https://github.com/future-minds7">
+          <a href="https://github.com/future-minds7" target="_blank">
             <Image
               src="/FutureMindsLogo.png"
               alt="Meet the Minds Behind StarkLotto"
@@ -52,45 +80,21 @@ const AboutUsPage = () => {
             />
           </a>
           <div className="flex mt-4 justify-center">
-            <a href="https://github.com/kimcascante">
-              <img
-                src="/Kim.png"
-                alt="Kimberly Cascante"
-                className="w-20 mr-2 rounded-full"
-              />
-            </a>
-            <a href="https://github.com/xJeffx23">
-              <img
-                src="/Jeff.jpeg"
-                alt="Jefferson Calderon"
-                className="w-20 mr-2 rounded-full"
-              />
-            </a>
-            <a href="https://github.com/josephpdf/">
-              <img
-                src="/Joseph.jpeg"
-                alt="Joseph Poveda"
-                className="w-20 mr-2 rounded-full"
-              />
-            </a>
-            <a href="https://github.com/drakkomaximo">
-              <img
-                src="/Andres.jpeg"
-                alt="Andrés Villanueva"
-                className="w-20 mr-2 rounded-full"
-              />
-            </a>
-            <a href="https://github.com/davidmelendez">
-              <img
-                src="/David.jpeg"
-                alt="David Melendez"
-                className="w-20 rounded-full"
-              />
-            </a>
+            {teamMembers.map((member) => (
+              <a href={member.github} key={member.name} target="_blank">
+                <Image
+                  src={member.image}
+                  alt={member.name}
+                  className="w-20 mr-2 rounded-full"
+                  width={80}
+                  height={80}
+                />
+              </a>
+            ))}
           </div>
           <p className="mt-4 text-lg text-center">
             We are a passionate team of developers, designers, and innovators
-            participating in the Winter Hackathon 2025. Our mission is to build
+            participating in the Winter Hackathon 2025. Our mission is to build
             a decentralized lottery system leveraging blockchain technology to
             ensure transparency, fairness, and on-chain prize distribution
           </p>

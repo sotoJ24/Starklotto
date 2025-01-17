@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 const socialLinks = [
@@ -28,7 +29,7 @@ const SocialLinks = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <img src={link.icon} alt={link.name} className="w-6 h-6" />
+          <Image src={link.icon} alt={link.name} width={24} height={24} />
         </a>
       ))}
     </div>
