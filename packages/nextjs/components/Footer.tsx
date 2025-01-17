@@ -69,7 +69,7 @@ export const Footer = () => {
         {/* Enlaces de Redes Sociales */}
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
           <Link
-            href="https://github.com/Scaffold-Stark/scaffold-stark-2"
+            href="https://github.com/future-minds7"
             target="_blank"
             rel="noreferrer"
           >
@@ -77,7 +77,7 @@ export const Footer = () => {
               GitHub
             </span>
           </Link>
-          <Link href="https://twitter.com" target="_blank" rel="noreferrer">
+          <Link href="https://x.com/futureminds_7" target="_blank" rel="noreferrer">
             <span className="text-white hover:text-yellow-400 transition">
               Twitter
             </span>

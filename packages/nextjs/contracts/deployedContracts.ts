@@ -7,7 +7,7 @@ const deployedContracts = {
   devnet: {
     YourContract: {
       address:
-        "0x393ea5b00994dc4d13d1ee7eaf1bec6b69b96d15b65de6a030a12375cdbd1e0",
+        "0x13e7ae0491d920d2f94d666a470449c916cb5f50e0c067d5cf8eff2aa43a384",
       abi: [
         {
           type: "impl",
