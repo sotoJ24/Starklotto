@@ -110,7 +110,10 @@ const ContactUsPage = () => {
       <p className="mt-4 text-lg">Have any questions? Reach out to us!</p>
       <form onSubmit={onSubmit} className="mt-8 max-w-md mx-auto bg-[#1A1A1A] p-4 rounded">
         <div className="mb-4">
-          <label className="flex items-center text-left mb-2" htmlFor="fullName">
+          <label
+            className="flex items-center text-left mb-2"
+            htmlFor="fullName"
+          >
             Full Name
             <UserIcon className="h-5 w-5 text-white ml-2" />
           </label>
