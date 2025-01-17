@@ -25,9 +25,17 @@ const PrizesPage = () => {
 
     if (difference > 0) {
       timeLeft = {
-        days: String(Math.floor(difference / (1000 * 60 * 60 * 24))).padStart(2, "0"),
-        hours: String(Math.floor((difference / (1000 * 60 * 60)) % 24)).padStart(2, "0"),
-        minutes: String(Math.floor((difference / 1000 / 60) % 60)).padStart(2, "0"),
+        days: String(Math.floor(difference / (1000 * 60 * 60 * 24))).padStart(
+          2,
+          "0",
+        ),
+        hours: String(
+          Math.floor((difference / (1000 * 60 * 60)) % 24),
+        ).padStart(2, "0"),
+        minutes: String(Math.floor((difference / 1000 / 60) % 60)).padStart(
+          2,
+          "0",
+        ),
         seconds: String(Math.floor((difference / 1000) % 60)).padStart(2, "0"),
       };
     }
@@ -63,34 +71,43 @@ const PrizesPage = () => {
         🎉 Discover the Prizes!
       </h1>
 
-      
       <div className="flex flex-col md:flex-row justify-center items-center w-full max-w-7xl gap-8">
         {/* 🔥 Sección Izquierda - Lotería */}
         <div className="w-full md:w-1/2 flex flex-col items-center">
-          <h2 className="text-3xl font-bold text-center mb-4">🔥 Current Award 🔥</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">
+            🔥 Current Award 🔥
+          </h2>
           <div className="w-80 p-6 bg-gradient-to-b from-red-600 to-orange-500 rounded-2xl shadow-2xl hover:scale-105 transition-transform duration-300">
-            <h2 className="text-2xl font-bold mb-2 text-center">House Lottery</h2>
-            <p className="text-sm text-center mb-2">Bet 2 $Clotta and choose 5 numbers</p>
-            <p className="text-sm text-center mb-4">💰 Prize: Accumulated Jackpot.</p>
+            <h2 className="text-2xl font-bold mb-2 text-center">
+              House Lottery
+            </h2>
+            <p className="text-sm text-center mb-2">
+              Bet 2 $Clotta and choose 5 numbers
+            </p>
+            <p className="text-sm text-center mb-4">
+              💰 Prize: Accumulated Jackpot.
+            </p>
 
             <p className="text-center text-lg font-semibold text-cyan-200 mb-2">
               Next Draw In
             </p>
 
-            
             <div className="flex justify-center space-x-2 mb-4">
               {Object.entries(timeLeft).map(([key, value]) => (
                 <div
                   key={key}
                   className="flex flex-col items-center justify-center w-14 h-20 bg-gray-900 bg-opacity-70 text-white rounded-lg shadow-md"
                 >
-                  <span className="text-2xl font-extrabold text-green-400">{value}</span>
-                  <span className="text-xs capitalize text-gray-300">{key}</span>
+                  <span className="text-2xl font-extrabold text-green-400">
+                    {value}
+                  </span>
+                  <span className="text-xs capitalize text-gray-300">
+                    {key}
+                  </span>
                 </div>
               ))}
             </div>
 
-            
             <button
               onClick={() => router.push("/play")}
               className="w-full py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white font-bold rounded-lg shadow-lg hover:opacity-90 transition"
@@ -100,9 +117,10 @@ const PrizesPage = () => {
           </div>
         </div>
 
-        
         <div className="w-full md:w-1/2 flex flex-col items-center">
-          <h2 className="text-3xl font-bold text-center mb-4">📅 Draw Results 📅</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">
+            📅 Draw Results 📅
+          </h2>
           <div className="bg-gray-900 bg-opacity-30 backdrop-blur-md p-6 rounded-2xl shadow-lg w-full">
             <table className="w-full text-left text-white border-collapse">
               <thead>

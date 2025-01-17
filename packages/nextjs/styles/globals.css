@@ -182,18 +182,17 @@ table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background-color: rgba(0, 0, 0, 0.4); 
-  border-radius: 12px; 
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6); 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 
-
-th, td {
+th,
+td {
   padding: 1rem;
   text-align: center;
 }
-
 
 th {
   background-color: rgba(255, 255, 255, 0.1);
@@ -204,11 +203,9 @@ th {
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-
 tr:nth-child(even) {
   background-color: rgba(255, 255, 255, 0.05);
 }
-
 
 tr:hover {
   background-color: rgba(255, 255, 255, 0.15);
@@ -216,14 +213,11 @@ tr:hover {
   transition: all 0.2s ease-in-out;
 }
 
-
 td {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #e0e0e0;
 }
 
-
 tr:last-child td {
   border-bottom: none;
 }
-

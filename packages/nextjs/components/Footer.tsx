@@ -77,7 +77,11 @@ export const Footer = () => {
               GitHub
             </span>
           </Link>
-          <Link href="https://x.com/futureminds_7" target="_blank" rel="noreferrer">
+          <Link
+            href="https://x.com/futureminds_7"
+            target="_blank"
+            rel="noreferrer"
+          >
             <span className="text-white hover:text-yellow-400 transition">
               Twitter
             </span>

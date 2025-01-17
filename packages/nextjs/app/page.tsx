@@ -15,7 +15,7 @@ const Home = () => {
           The most innovative decentralized lottery on the StarkNet blockchain.
         </p>
         <p className="text-center text-lg">
-        Play, win, and be part of the future of digital lotteries.
+          Play, win, and be part of the future of digital lotteries.
         </p>
       </div>
 
