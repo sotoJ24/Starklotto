@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { CustomConnectButton } from "~~/components/scaffold-stark/CustomConnectButton";
 
 const PlayPage = () => {
   const router = useRouter();
@@ -73,7 +74,7 @@ const PlayPage = () => {
       </h1>
 
       <button className="mb-6 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-semibold rounded-full shadow-lg hover:opacity-90 transition">
-        Connect Wallet to Start Playing
+        <CustomConnectButton />
       </button>
 
       <div className="flex flex-wrap justify-center gap-8">
