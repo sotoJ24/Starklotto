@@ -8,71 +8,24 @@ import {
 } from "@heroicons/react/24/outline";
 import { ContactUsFormData } from "~~/interfaces/contact-us";
 import { CONTACT_US_SHEET_SCRIPT } from "~~/utils/Constants";
+import { useForm } from "react-hook-form";
+import { contactUsSchema } from "~~/utils/validations/contact-us";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const ContactUsPage = () => {
-  const [formData, setFormData] = useState<ContactUsFormData>({
-    name: "",
-    email: "",
-    message: "",
-  });
-  const [errors, setErrors] = useState<ContactUsFormData>({
-    name: "",
-    email: "",
-    message: "",
-  });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactUsFormData>(
+    {
+      resolver: zodResolver(contactUsSchema),
+    }
+  );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-
-    // Validar el campo correspondiente y actualizar errores
-    if (name === "name" && value !== "") {
-      setErrors((prev) => ({ ...prev, name: "" }));
-    }
-    if (name === "email") {
-      if (value === "") {
-        setErrors((prev) => ({ ...prev, email: "Email is required" }));
-      } else if (!/\S+@\S+\.\S+/.test(value)) {
-        setErrors((prev) => ({ ...prev, email: "Email is invalid" }));
-      } else {
-        setErrors((prev) => ({ ...prev, email: "" }));
-      }
-    }
-    if (name === "message" && value !== "") {
-      setErrors((prev) => ({ ...prev, message: "" }));
-    }
-  };
-
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = async (data: ContactUsFormData) => {
     setIsSubmitting(true);
-    let hasErrors = false;
-
-    if (formData.name === "") {
-      setErrors((prev) => ({ ...prev, name: "Name is required" }));
-      hasErrors = true;
-    }
-    if (formData.email === "") {
-      setErrors((prev) => ({ ...prev, email: "Email is required" }));
-      hasErrors = true;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setErrors((prev) => ({ ...prev, email: "Email is invalid" }));
-      hasErrors = true;
-    }
-    if (formData.message === "") {
-      setErrors((prev) => ({ ...prev, message: "Message is required" }));
-      hasErrors = true;
-    }
-
-    if (hasErrors) return; // Detener si hay errores
-
     try {
       await fetch(CONTACT_US_SHEET_SCRIPT, {
         method: "POST",
@@ -81,7 +34,7 @@ const ContactUsPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       setIsSubmitted(true);
@@ -90,8 +43,6 @@ const ContactUsPage = () => {
     }
 
     // Reiniciar el formulario
-    setFormData({ name: "", email: "", message: "" });
-    setErrors({ name: "", email: "", message: "" });
     setIsSubmitting(false);
   };
 
@@ -105,6 +56,7 @@ const ContactUsPage = () => {
     if (isSubmitted) {
       setTimeout(() => {
         setIsSubmitted(false);
+        reset();
       }, 3000);
     }
   }, [isSubmitted, submitError]);
@@ -114,7 +66,7 @@ const ContactUsPage = () => {
       <h1 className="text-4xl font-bold">Contact Us</h1>
       <p className="mt-4 text-lg">Have any questions? Reach out to us!</p>
       <form
-        onSubmit={onSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="mt-8 max-w-md mx-auto bg-[#1A1A1A] p-4 rounded"
       >
         <div className="mb-4">
@@ -127,13 +79,12 @@ const ContactUsPage = () => {
           </label>
           <input
             type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
+            {...register("name")}
             className="w-full p-2 border border-gray-300 rounded bg-[#2A2A2A] text-white text-sm"
             placeholder="YOUR NAME"
+            disabled={isSubmitting || isSubmitted}
           />
-          {errors.name && <p className="text-red-500">{errors.name}</p>}
+          {errors.name && <p className="text-red-500">{errors.name.message}</p>}
         </div>
 
         <div className="mb-4">
@@ -143,13 +94,12 @@ const ContactUsPage = () => {
           </label>
           <input
             type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
+            {...register("email")}
             className="w-full p-2 border border-gray-300 rounded bg-[#2A2A2A] text-white text-sm"
             placeholder="YOUR@EMAIL.COM"
+            disabled={isSubmitting || isSubmitted}
           />
-          {errors.email && <p className="text-red-500">{errors.email}</p>}
+          {errors.email && <p className="text-red-500">{errors.email.message}</p>}
         </div>
 
         <div className="mb-4">
@@ -158,22 +108,21 @@ const ContactUsPage = () => {
             <PencilSquareIcon className="h-5 w-5 text-white ml-2" />
           </label>
           <textarea
-            name="message"
-            value={formData.message}
-            onChange={handleChange}
+            {...register("message")}
             className="w-full p-2 border border-gray-300 rounded bg-[#2A2A2A] text-white text-sm"
             rows={4}
             placeholder="YOUR MESSAGE..."
+            disabled={isSubmitting || isSubmitted}
           />
-          {errors.message && <p className="text-red-500">{errors.message}</p>}
+          {errors.message && <p className="text-red-500">{errors.message.message}</p>}
         </div>
 
         <button
           type="submit"
           className="bg-gradient-to-r from-[#3A0909] to-[#000000] text-white py-2 px-4 rounded"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSubmitted}
         >
-          {isSubmitting ? "Sending..." : "Contact Us"}
+          {isSubmitting ? "Sending..." : isSubmitted ? "Sent!" : "Contact Us"}
         </button>
       </form>
       {submitError && <p className="text-red-500 mt-4">{submitError}</p>}
