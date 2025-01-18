@@ -7,7 +7,7 @@ const deployedContracts = {
   sepolia: {
     Lottery: {
       address:
-        "0x75c487e15c2541cb6904e735e3727120a4344a79404394bc17f7729a8c57f06",
+        "0x7915d32ffeb8b65ae6f5c080fc53fd5d674bed587aac2f74f1cb2c0e4c4cf81",
       abi: [
         {
           type: "impl",
@@ -243,6 +243,10 @@ const deployedContracts = {
                   name: "drawId",
                   type: "core::integer::u64",
                 },
+                {
+                  name: "player",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
               ],
               outputs: [
                 {
@@ -258,6 +262,10 @@ const deployedContracts = {
                 {
                   name: "drawId",
                   type: "core::integer::u64",
+                },
+                {
+                  name: "player",
+                  type: "core::starknet::contract_address::ContractAddress",
                 },
               ],
               outputs: [
@@ -278,6 +286,10 @@ const deployedContracts = {
                 {
                   name: "ticketId",
                   type: "core::felt252",
+                },
+                {
+                  name: "player",
+                  type: "core::starknet::contract_address::ContractAddress",
                 },
               ],
               outputs: [
@@ -443,6 +455,11 @@ const deployedContracts = {
               type: "core::array::Array::<core::integer::u16>",
               kind: "data",
             },
+            {
+              name: "ticketCount",
+              type: "core::integer::u32",
+              kind: "data",
+            },
           ],
         },
         {
@@ -475,12 +492,12 @@ const deployedContracts = {
             {
               name: "drawId",
               type: "core::integer::u64",
-              kind: "data",
+              kind: "key",
             },
             {
               name: "player",
               type: "core::starknet::contract_address::ContractAddress",
-              kind: "data",
+              kind: "key",
             },
             {
               name: "ticketId",
@@ -523,7 +540,7 @@ const deployedContracts = {
         },
       ],
       classHash:
-        "0x74f0c443ca875f734982b76b8917e6c6417aaf591f48b9f226df985409420e7",
+        "0x122363bfc830fca90297374f4a6f6f9b13b58be273decc292e9f569c16a5f69",
     },
   },
 } as const;

@@ -1,11 +1,13 @@
 use starknet::ContractAddress;
-use core::dict::Felt252DictTrait;
 
+//=======================================================================================
+//structs
+//=======================================================================================
 #[derive(Drop, Copy, Serde, starknet::Store)]
 //serde for serialization and deserialization
 struct Ticket {
     player: ContractAddress,
-    number1: u16,  
+    number1: u16,
     number2: u16,
     number3: u16,
     number4: u16,
@@ -19,13 +21,12 @@ struct Ticket {
 struct Draw {
     drawId: u64,
     accumulatedPrize: u256,
-    winningNumber1: u16,  
+    winningNumber1: u16,
     winningNumber2: u16,
     winningNumber3: u16,
     winningNumber4: u16,
     winningNumber5: u16,
     //map of ticketId to ticket
-    //tickets: Map<felt252, Ticket>,
     isActive: bool,
     //start time of the draw,timestamp unix
     startTime: u64,
@@ -33,35 +34,52 @@ struct Draw {
     endTime: u64,
 }
 
+//=======================================================================================
+//interface
+//=======================================================================================
 #[starknet::interface]
 trait ILottery<TContractState> {
-    fn Initialize(ref self: TContractState,  ticketPrice: u256, accumulatedPrize: u256);
+     //=======================================================================================
+    //set functions
+    fn Initialize(ref self: TContractState, ticketPrice: u256, accumulatedPrize: u256);
     fn BuyTicket(ref self: TContractState, drawId: u64, numbers: Array<u16>);
     fn DrawNumbers(ref self: TContractState, drawId: u64);
     fn ClaimPrize(ref self: TContractState, drawId: u64, ticketId: felt252);
-    fn CheckMatches(self: @TContractState, drawId: u64, number1: u16, number2: u16, number3: u16, number4: u16, number5: u16) -> u8;
+    fn CheckMatches( self: @TContractState, drawId: u64, number1: u16, number2: u16,number3: u16, number4: u16, number5: u16,) -> u8;
     fn GetAccumulatedPrize(self: @TContractState) -> u256;
     fn GetFixedPrize(self: @TContractState, matches: u8) -> u256;
     fn CreateNewDraw(ref self: TContractState, accumulatedPrize: u256);
+    //=======================================================================================
+    //get functions
+
     fn GetDrawStatus(self: @TContractState, drawId: u64) -> bool;
-    fn GetUserTickets(self: @TContractState, drawId: u64) -> Array<felt252>;
-    fn GetUserTicketsCount(self: @TContractState, drawId: u64) -> u32;
-    fn GetTicketInfo(self: @TContractState, drawId: u64, ticketId: felt252) -> Ticket;
+    fn GetUserTickets(self: @TContractState, drawId: u64, player: ContractAddress) -> Array<felt252>;
+    fn GetUserTicketsCount(self:  @TContractState, drawId: u64, player: ContractAddress) -> u32;
+    fn GetTicketInfo(self: @TContractState, drawId: u64, ticketId: felt252, player: ContractAddress) -> Ticket;
     fn GetTicketCurrentId(self: @TContractState) -> u64;
     fn GetWinningNumbers(self: @TContractState, drawId: u64) -> Array<u16>;
+     //=======================================================================================
+  
 }
 
+//=======================================================================================
+//contract
+//=======================================================================================
 #[starknet::contract]
 mod Lottery {
-    
+    use core::array::Array;
+    use core::array::ArrayTrait;
     use core::dict::Felt252DictTrait;
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-    use starknet::storage::Map;
-    use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
+    use starknet::storage::{
+        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+    };
+    use starknet::{ContractAddress, contract_address_const};
+    use starknet::{get_block_timestamp, get_caller_address, get_contract_address};
     use super::{Draw, ILottery, Ticket};
 
-    //ownable component by openzeppelin
+   // ownable component by openzeppelin
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     //ownable component by openzeppelin
@@ -71,26 +89,9 @@ mod Lottery {
 
     const STRK_CONTRACT_ADRESS: felt252 =
         0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d;
-
-    #[storage]
-    struct Storage {
-        ticketPrice: u256,
-        draws: Map<u64, Draw>,
-        tickets: Map<(u64, felt252), Ticket>, 
-        currentDrawId: u64,
-        currentTicketId: u64,
-        fixedPrize4Matches: u256,
-        fixedPrize3Matches: u256,
-        fixedPrize2Matches: u256,
-        //ownable component by openzeppelin
-        #[substorage(v0)]
-        ownable: OwnableComponent::Storage,
-        accumulatedPrize: u256,
-        userTickets: Map<(ContractAddress, u64), felt252>,
-        userTicketCount: Map<(ContractAddress, u64), u32>, // (usuario, drawId) -> cantidad de tickets
-        userTicketIds: Map<(ContractAddress, u64, u32), felt252>, // (usuario, drawId, índice) -> ticketId
-        
-    }
+    //=======================================================================================
+    //events
+    //=======================================================================================
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -108,6 +109,7 @@ mod Lottery {
         player: ContractAddress,
         ticketId: felt252,
         numbers: Array<u16>,
+        ticketCount: u32,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -119,21 +121,53 @@ mod Lottery {
 
     #[derive(Drop, starknet::Event)]
     struct PrizeClaimed {
+        #[key]
         drawId: u64,
+        #[key]
         player: ContractAddress,
         ticketId: felt252,
         prizeAmount: u256,
     }
 
+    //=======================================================================================
+    //storage
+    //=======================================================================================
+    #[storage]
+    struct Storage {
+        ticketPrice: u256,
+        currentDrawId: u64,
+        currentTicketId: u64,
+        fixedPrize4Matches: u256,
+        fixedPrize3Matches: u256,
+        fixedPrize2Matches: u256,
+        accumulatedPrize: u256,
+        userTickets: Map<(ContractAddress, u64), felt252>,  
+        userTicketCount: Map<(ContractAddress, u64), u32>, // (usuario, drawId) -> usert ticket count
+        // (usuario, drawId, índice)-> ticketId
+        userTicketIds: Map<(ContractAddress, u64, u32), felt252>, 
+         draws: Map<u64, Draw>,
+    tickets: Map<(u64, felt252), Ticket>,
+   // ownable component by openzeppelin
+         #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+
+    }
+    //=======================================================================================
+    //constructor
+    //=======================================================================================
+
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress) {
-        self.ownable.initializer(owner);
+             self.ownable.initializer(owner);
         self.fixedPrize4Matches.write(4000000000000000000);
         self.fixedPrize3Matches.write(3000000000000000000);
         self.fixedPrize2Matches.write(2000000000000000000);
         self.currentDrawId.write(0);
         self.currentTicketId.write(0);
     }
+    //=======================================================================================
+    //impl
+    //=======================================================================================
 
     #[abi(embed_v0)]
     impl LotteryImpl of ILottery<ContractState> {
@@ -145,22 +179,23 @@ mod Lottery {
             self.CreateNewDraw(0);
         }
 
+        //=======================================================================================
         //OK
         fn BuyTicket(ref self: ContractState, drawId: u64, numbers: Array<u16>) {
             assert(self.ValidateNumbers(@numbers), 'Invalid numbers');
             let draw = self.draws.read(drawId);
-            assert(draw.isActive, 'Draw is not active');
+              assert(draw.isActive, 'Draw is not active');
 
             //TODO: We need to process the payment
             assert(numbers.len() == 5, 'Invalid numbers length');
-            
+
             // Debug del array antes de crear el ticket
             let n1 = *numbers.at(0);
             let n2 = *numbers.at(1);
             let n3 = *numbers.at(2);
             let n4 = *numbers.at(3);
             let n5 = *numbers.at(4);
-            
+
             // Verificar que los números no son 0
             assert(n1 > 0, 'number1 is 0');
             assert(n2 > 0, 'number2 is 0');
@@ -168,7 +203,7 @@ mod Lottery {
             assert(n4 > 0, 'number4 is 0');
             assert(n5 > 0, 'number5 is 0');
 
-            let ticket = Ticket {
+            let ticketNew = Ticket {
                 player: get_caller_address(),
                 number1: n1,
                 number2: n2,
@@ -180,25 +215,40 @@ mod Lottery {
             };
 
             let ticketId = GenerateTicketId(ref self);
-            self.tickets.write((drawId, ticketId), ticket);
+            self.tickets.write((drawId, ticketId), ticketNew);
 
-            // Incrementar contador y guardar ticketId
-            let count = self.userTicketCount.read((get_caller_address(), drawId));
+            //Incrementar contador y guardar ticketId
+        
+            let mut count = self.userTicketCount.read((get_caller_address(), drawId));
+            count += 1;
+            self.userTicketCount.write((get_caller_address(), drawId),count);
             self.userTicketIds.write((get_caller_address(), drawId, count), ticketId);
-            self.userTicketCount.write((get_caller_address(), drawId), count + 1);
 
-            self.emit(TicketPurchased { drawId, player: get_caller_address(), ticketId, numbers });
-            
-            assert(self.userTicketCount.read((get_caller_address(), drawId)) > 0, 'Ticket count not updated');
+            self
+                .emit(
+                    TicketPurchased {
+                        drawId,
+                        player: get_caller_address(),
+                        ticketId,
+                        numbers,
+                        ticketCount: count,
+                    },
+                );
         }
+        //=======================================================================================
+        fn GetUserTicketsCount(self: @ContractState, drawId: u64, player: ContractAddress) -> u32 {
 
+            self.userTicketCount.read((player, drawId))
+        }
+     
+        //=======================================================================================
         //OK
         fn DrawNumbers(ref self: ContractState, drawId: u64) {
-            self.ownable.assert_only_owner();
-            let mut draw = self.draws.read(drawId);
-            assert(draw.isActive, 'Draw is not active');
+        self.ownable.assert_only_owner();
+         let mut draw = self.draws.read(drawId);
+        assert(draw.isActive, 'Draw is not active');
 
-            let winningNumbers = GenerateRandomNumbers();
+        let winningNumbers = GenerateRandomNumbers();
             draw.winningNumber1 = *winningNumbers.at(0);
             draw.winningNumber2 = *winningNumbers.at(1);
             draw.winningNumber3 = *winningNumbers.at(2);
@@ -207,42 +257,76 @@ mod Lottery {
             draw.isActive = false;
             self.draws.write(drawId, draw);
 
-            self.emit(DrawCompleted { 
-                drawId, 
-                winningNumbers, 
-                accumulatedPrize: self.accumulatedPrize.read() 
-            });
+        self
+            .emit(
+                DrawCompleted {
+                    drawId, winningNumbers, accumulatedPrize: self.accumulatedPrize.read(),
+                },
+            );
         }
-
+        //=======================================================================================
         //OK
         fn ClaimPrize(ref self: ContractState, drawId: u64, ticketId: felt252) {
-            let draw = self.draws.read(drawId);
-            let ticket = self.tickets.read((drawId, ticketId));
-            assert(!ticket.claimed, 'Prize already claimed');
-            assert(!draw.isActive, 'Draw still active');
+         let draw = self.draws.read(drawId);
+        let ticket = self.tickets.read((drawId, ticketId));
+        assert(!ticket.claimed, 'Prize already claimed');
+        assert(!draw.isActive, 'Draw still active');
 
-            let matches = self.CheckMatches(drawId, ticket.number1, ticket.number2, ticket.number3, ticket.number4, ticket.number5);
-            let prize = self.GetFixedPrize(matches);
+        let matches = self
+            .CheckMatches(
+                drawId,
+                ticket.number1,
+                ticket.number2,
+                ticket.number3,
+                ticket.number4,
+                ticket.number5,
+            );
+        let prize = self.GetFixedPrize(matches);
 
-            if prize > 0 {
-                //TODO: We need to process the payment of the prize
-                let mut ticket = ticket;
-                ticket.claimed = true;
-                self.tickets.write((drawId, ticketId), ticket);
 
-                self.emit(PrizeClaimed { 
-                    drawId, 
-                    player: ticket.player, 
-                    ticketId, 
-                    prizeAmount: prize 
-                });
-            }
+        let mut ticket = ticket;
+        ticket.claimed = true;
+        self.tickets.write((drawId, ticketId), ticket);
+
+        if prize > 0 {
+            //TODO: We need to process the payment of the prize
+         
+
+        self
+            .emit(
+                PrizeClaimed {
+                    drawId,
+                    player: ticket.player,
+                    ticketId,
+                    prizeAmount: prize
+                }
+            );
+        }else{
+            self
+            .emit(
+                PrizeClaimed {
+                    drawId,
+                    player: ticket.player,
+                    ticketId,
+                    prizeAmount: 0
+                }
+            );
+        }
         }
 
+         //=======================================================================================
         //OK
-        fn CheckMatches(self: @ContractState, drawId: u64, number1: u16, number2: u16, number3: u16, number4: u16, number5: u16) -> u8 {
+        fn CheckMatches(
+            self: @ContractState,
+            drawId: u64,
+            number1: u16,
+            number2: u16,
+            number3: u16,
+            number4: u16,
+            number5: u16,
+        ) -> u8 {
             // Obtener el sorteo
-            let draw = self.draws.read(drawId);
+             let draw = self.draws.read(drawId);
             assert(!draw.isActive, 'Draw must be completed');
 
             // Obtener los números ganadores
@@ -276,12 +360,13 @@ mod Lottery {
             matches
         }
 
-
+         //=======================================================================================
         //OK
         fn GetAccumulatedPrize(self: @ContractState) -> u256 {
             self.accumulatedPrize.read()
         }
 
+         //=======================================================================================
         //OK
         fn GetFixedPrize(self: @ContractState, matches: u8) -> u256 {
             match matches {
@@ -295,6 +380,7 @@ mod Lottery {
             }
         }
 
+         //=======================================================================================
         //OK
         fn CreateNewDraw(ref self: ContractState, accumulatedPrize: u256) {
             let drawId = self.currentDrawId.read() + 1;
@@ -306,53 +392,54 @@ mod Lottery {
                 winningNumber3: 0,
                 winningNumber4: 0,
                 winningNumber5: 0,
-                //tickets: Map::new(),
+               // tickets: Map::new(),
                 isActive: true,
                 startTime: get_block_timestamp(),
                 endTime: get_block_timestamp() + 604800 // 1 Week
             };
-            self.draws.write(drawId, newDraw);
+             self.draws.write(drawId, newDraw);
             self.currentDrawId.write(drawId);
         }
 
         //OK
         fn GetDrawStatus(self: @ContractState, drawId: u64) -> bool {
-            self.draws.read(drawId).isActive
+               self.draws.read(drawId).isActive
+          
         }
 
-        fn GetUserTicketsCount(self: @ContractState, drawId: u64) -> u32 {
-            self.userTicketCount.read((get_caller_address(), drawId))
-        }
-
-        fn GetUserTickets(self: @ContractState, drawId: u64) -> Array<felt252> {
+         //=======================================================================================
+        fn GetUserTickets(self: @ContractState, drawId: u64, player: ContractAddress) -> Array<felt252> {
             let mut userTickets = ArrayTrait::new();
-            let count = self.userTicketCount.read((get_caller_address(), drawId));
+            let count =  self.userTicketCount.read((player, drawId));
             
-            let mut i: u32 = 0;
+            let mut i: u32 = 1;
             loop {
-                if i >= count {
+                if i > count {
                     break;
                 }
-                let ticketId = self.userTicketIds.read((get_caller_address(), drawId, i));
-                userTickets.append(ticketId);
+                   let ticketId = self.userTicketIds.read((player, drawId, i));
+                  userTickets.append(ticketId);
                 i += 1;
             };
-            
+
             userTickets
         }
 
-        fn GetTicketInfo(self: @ContractState, drawId: u64, ticketId: felt252) -> Ticket {
-          
-            let ticket = self.tickets.read((drawId, ticketId));
+         //=======================================================================================
+        fn GetTicketInfo(self: @ContractState, drawId: u64, ticketId: felt252, player: ContractAddress) -> Ticket {
+             let ticket = self.tickets.read((drawId, ticketId));
             // Verificar que el ticket pertenece al caller
-            assert(ticket.player == get_caller_address(), 'Not ticket owner');
-            ticket
+             assert(ticket.player == player, 'Not ticket owner');
+             ticket
+           
         }
 
-        fn GetTicketCurrentId(self: @ContractState) -> u64{
+        //=======================================================================================
+        fn GetTicketCurrentId(self: @ContractState) -> u64 {
             self.currentTicketId.read()
         }
 
+         //=======================================================================================
         fn GetWinningNumbers(self: @ContractState, drawId: u64) -> Array<u16> {
             let draw = self.draws.read(drawId);
             assert(!draw.isActive, 'Draw must be completed');
@@ -364,12 +451,19 @@ mod Lottery {
             numbers.append(draw.winningNumber4);
             numbers.append(draw.winningNumber5);
             numbers
+           
         }
     }
 
+    //=======================================================================================
+    //constants
+    //=======================================================================================
     const MaxNumber: u16 = 40; // max number
     const RequiredNumbers: usize = 5; // amount of numbers per ticket
 
+    //=======================================================================================
+    //internal functions
+    //=======================================================================================
     #[generate_trait]
     impl InternalFunctions of InternalFunctionsTrait {
         //OK
@@ -411,6 +505,8 @@ mod Lottery {
         }
     }
 
+    //=======================================================================================
+
     //OK
     fn GenerateTicketId(ref self: ContractState) -> felt252 {
         let ticketId = self.currentTicketId.read();
@@ -422,7 +518,7 @@ mod Lottery {
     fn GenerateRandomNumbers() -> Array<u16> {
         let mut numbers = ArrayTrait::new();
         let blockTimestamp = get_block_timestamp();
-        
+
         // Usar solo timestamp para generar números (para testing)
         let mut count = 0;
         let mut usedNumbers: Felt252Dict<bool> = Default::default();
@@ -433,7 +529,7 @@ mod Lottery {
             }
             let number = (blockTimestamp + count) % (MaxNumber.into() + 1);
             let number_u16: u16 = number.try_into().unwrap();
-            
+
             if usedNumbers.get(number.into()) != true {
                 numbers.append(number_u16);
                 usedNumbers.insert(number.into(), true);
@@ -444,31 +540,31 @@ mod Lottery {
         numbers
     }
     // fn GenerateRandomNumbers() -> Array<u16> {
-    //     TODO: We need to use VRF de Pragma Oracle to generate random numbers
+//     TODO: We need to use VRF de Pragma Oracle to generate random numbers
 
     //     now we are generating random numbers for testing
-    //     let mut numbers = ArrayTrait::new();
-    //     let blockTimestamp = get_block_timestamp();
-    //     let blockHash = get_block_hash();
+//     let mut numbers = ArrayTrait::new();
+//     let blockTimestamp = get_block_timestamp();
+//     let blockHash = get_block_hash();
 
     //     seed is the combination of the block timestamp and the block hash
-    //     let seed = blockTimestamp + blockHash;
+//     let seed = blockTimestamp + blockHash;
 
     //     generate 4 unique numbers between 0-99
-    //     let mut usedNumbers: Felt252Dict<bool> = Default::default();
-    //     let mut count = 0;
+//     let mut usedNumbers: Felt252Dict<bool> = Default::default();
+//     let mut count = 0;
 
     //     while count < 4 {
-    //         let number = (seed + count) % 100;
+//         let number = (seed + count) % 100;
 
     //         check if the number is already used
-    //         if !usedNumbers.contains(number) {
-    //             numbers.append(number);
-    //             usedNumbers.insert(number, true);
-    //             count += 1;
-    //         }
-    //     }
+//         if !usedNumbers.contains(number) {
+//             numbers.append(number);
+//             usedNumbers.insert(number, true);
+//             count += 1;
+//         }
+//     }
 
     //     numbers
-    // }
+// }
 }
