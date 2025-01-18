@@ -13,11 +13,14 @@ import { contactUsSchema } from "~~/utils/validations/contact-us";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const ContactUsPage = () => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactUsFormData>(
-    {
-      resolver: zodResolver(contactUsSchema),
-    }
-  );
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactUsFormData>({
+    resolver: zodResolver(contactUsSchema),
+  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -99,7 +102,9 @@ const ContactUsPage = () => {
             placeholder="YOUR@EMAIL.COM"
             disabled={isSubmitting || isSubmitted}
           />
-          {errors.email && <p className="text-red-500">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="text-red-500">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="mb-4">
@@ -114,7 +119,9 @@ const ContactUsPage = () => {
             placeholder="YOUR MESSAGE..."
             disabled={isSubmitting || isSubmitted}
           />
-          {errors.message && <p className="text-red-500">{errors.message.message}</p>}
+          {errors.message && (
+            <p className="text-red-500">{errors.message.message}</p>
+          )}
         </div>
 
         <button

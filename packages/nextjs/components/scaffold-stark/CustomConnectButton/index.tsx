@@ -21,7 +21,9 @@ interface CustomConnectButtonProps {
 /**
  * Custom Connect Button (watch balance + custom design)
  */
-export const CustomConnectButton: React.FC<CustomConnectButtonProps> = ({ isHeader = false }) => {
+export const CustomConnectButton: React.FC<CustomConnectButtonProps> = ({
+  isHeader = false,
+}) => {
   useAutoConnect();
   const networkColor = useNetworkColor();
   const { targetNetwork } = useTargetNetwork();

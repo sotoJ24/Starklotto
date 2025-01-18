@@ -7,7 +7,7 @@ import { useTheme } from "next-themes";
 import { BlockieAvatar } from "../BlockieAvatar";
 import GenericModal from "./GenericModal";
 import { LAST_CONNECTED_TIME_LOCALSTORAGE_KEY } from "~~/utils/Constants";
-import {WalletIcon} from "@heroicons/react/24/outline";
+import { WalletIcon } from "@heroicons/react/24/outline";
 const loader = ({ src }: { src: string }) => {
   return src;
 };
