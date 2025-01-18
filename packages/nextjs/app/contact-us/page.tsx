@@ -62,7 +62,7 @@ const ContactUsPage = () => {
         reset();
       }, 3000);
     }
-  }, [isSubmitted, submitError]);
+  }, [isSubmitted, submitError, reset]);
 
   return (
     <div className="text-white text-center py-20">
