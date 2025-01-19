@@ -4,7 +4,6 @@
  */
 
 const deployedContracts = {
-
   sepolia: {
     Lottery: {
       address:
