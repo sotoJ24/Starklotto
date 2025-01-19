@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ContractUI } from "~~/app/_components/contractByApp";
 
 const NumberSelectionPage = () => {
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -37,7 +38,7 @@ const NumberSelectionPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-transparent text-white pt-4 px-4">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-transparent text-white pt-4 px-4 mt-12">
       {/* Title */}
       <h1 className="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 drop-shadow-lg animate-fade-in mt-4 md:mt-6 mb-4 leading-[1.3] text-center">
         Select Your Numbers and <br /> Play for the Jackpot!
@@ -158,6 +159,8 @@ const NumberSelectionPage = () => {
       >
         Go Back
       </button>
+
+      <ContractUI contractName="Lottery" />
     </div>
   );
 };

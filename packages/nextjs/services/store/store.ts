@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { Page } from "~~/interfaces/global";
 import scaffoldConfig from "~~/scaffold.config";
 import { ChainWithAttributes } from "~~/utils/scaffold-stark";
 
@@ -10,6 +11,8 @@ import { ChainWithAttributes } from "~~/utils/scaffold-stark";
  *
  * Think about it as a global useState.
  */
+
+
 
 type GlobalState = {
   nativeCurrencyPrice: number;

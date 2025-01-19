@@ -1,10 +1,12 @@
 import { Abi } from "abi-wan-kanabi";
-import { WriteOnlyFunctionForm } from "~~/app/debug/_components/contract";
+
 import {
   Contract,
   ContractName,
   getFunctionsByStateMutability,
 } from "~~/utils/scaffold-stark/contract";
+import { WriteOnlyFunctionForm } from "./WriteOnlyFunctionForm";
+import { useContractFnStore } from "~~/services/store/contractFn";
 
 export const ContractWriteMethods = ({
   onChange,
@@ -16,6 +18,8 @@ export const ContractWriteMethods = ({
   if (!deployedContractData) {
     return null;
   }
+
+  const filteredFunctionsNames = useContractFnStore((state) => state.filteredFunctionsNames);
 
   const functionsToDisplay = getFunctionsByStateMutability(
     (deployedContractData.abi || []) as Abi,
@@ -30,9 +34,13 @@ export const ContractWriteMethods = ({
     return <>No write methods</>;
   }
 
+  const filteredFunctions = functionsToDisplay.filter((fn) => 
+    filteredFunctionsNames.write.includes(fn.fn.name.toLowerCase()),
+  );
+
   return (
     <>
-      {functionsToDisplay.map(({ fn }, idx) => (
+      {filteredFunctions.map(({ fn }, idx) => (
         <WriteOnlyFunctionForm
           abi={deployedContractData.abi as Abi}
           key={`${fn.name}-${idx}}`}
