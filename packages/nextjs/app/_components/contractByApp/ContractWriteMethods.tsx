@@ -18,14 +18,14 @@ export const ContractWriteMethods = ({
   onChange: () => void;
   deployedContractData: Contract<ContractName>;
 }) => {
-  if (!deployedContractData) {
-    return null;
-  }
-
   const currentPage = useContractFnStore((state) => state.currentPage);
   const filteredFunctionsNames = useContractFnStore(
     (state) => state.filteredFunctionsNames,
   );
+
+  if (!deployedContractData) {
+    return null;
+  }
 
   const functionsToDisplay = getFunctionsByStateMutability(
     (deployedContractData.abi || []) as Abi,

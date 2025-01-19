@@ -6,7 +6,6 @@ import { usePlayStore } from "~~/services/store/play";
 import { ContractPlayUI } from "~~/app/_components/contractByApp/ContractPlayUI";
 
 const NumberSelectionPage = () => {
-  /* const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]); */
   const selectedNumbers = usePlayStore((state) => state.loteryNumbersSelected);
   const setSelectedNumbers = usePlayStore(
     (state) => state.setLoteryNumbersSelected,

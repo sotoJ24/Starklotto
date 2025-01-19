@@ -12,13 +12,13 @@ export const ContractReadMethods = ({
 }: {
   deployedContractData: Contract<ContractName>;
 }) => {
-  if (!deployedContractData) {
-    return null;
-  }
-
   const filteredFunctionsNames = useContractFnStore(
     (state) => state.filteredFunctionsNames,
   );
+
+  if (!deployedContractData) {
+    return null;
+  }
 
   const functionsToDisplay = getFunctionsByStateMutability(
     (deployedContractData.abi || []) as Abi,
@@ -36,9 +36,6 @@ export const ContractReadMethods = ({
   if (!functionsToDisplay.length) {
     return <>No read methods</>;
   }
-
-  console.log(filteredFunctionsNames.read);
-  console.log(functionsToDisplay);
 
   const filteredFunctions = functionsToDisplay.filter((fn) =>
     filteredFunctionsNames.read.includes(fn.fn.name.toLowerCase()),

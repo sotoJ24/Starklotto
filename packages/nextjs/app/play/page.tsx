@@ -79,7 +79,7 @@ const PlayPage = () => {
   useEffect(() => {
     setLoteryId(null);
     setCurrentPage(Page.Play);
-  }, []);
+  }, [setLoteryId, setCurrentPage]);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen text-white pt-8">
