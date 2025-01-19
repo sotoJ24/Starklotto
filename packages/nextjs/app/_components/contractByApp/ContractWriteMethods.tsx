@@ -5,8 +5,10 @@ import {
   ContractName,
   getFunctionsByStateMutability,
 } from "~~/utils/scaffold-stark/contract";
-import { WriteOnlyFunctionForm } from "./WriteOnlyFunctionForm";
+/* import { WriteOnlyFunctionForm } from "./WriteOnlyFunctionForm"; */
 import { useContractFnStore } from "~~/services/store/contractFn";
+import { BuyTicketForm } from "./BuyTicketForm";
+import { WriteOnlyFunctionForm } from "./WriteOnlyFunctionForm";
 
 export const ContractWriteMethods = ({
   onChange,
@@ -41,14 +43,20 @@ export const ContractWriteMethods = ({
   return (
     <>
       {filteredFunctions.map(({ fn }, idx) => (
-        <WriteOnlyFunctionForm
+        <div key={idx}>
+          <WriteOnlyFunctionForm
           abi={deployedContractData.abi as Abi}
-          key={`${fn.name}-${idx}}`}
           abiFunction={fn}
           onChange={onChange}
           contractAddress={deployedContractData.address}
           //   inheritedFrom={inheritedFrom}
         />
+        <BuyTicketForm
+          abi={deployedContractData.abi as Abi}
+          onChange={onChange}
+          contractAddress={deployedContractData.address}
+        />
+        </div>
       ))}
     </>
   );

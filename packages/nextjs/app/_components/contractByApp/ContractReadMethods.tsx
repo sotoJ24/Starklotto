@@ -42,8 +42,6 @@ export const ContractReadMethods = ({
     filteredFunctionsNames.read.includes(fn.fn.name.toLowerCase())
   );
 
-  console.log(filteredFunctions);
-
   return (
     <>
       {filteredFunctions.map(({ fn }) => (

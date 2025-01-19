@@ -4,9 +4,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ContractUI } from "~~/app/_components/contractByApp";
+import { usePlayStore } from "~~/services/store/play";
 
 const NumberSelectionPage = () => {
-  const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
+  /* const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]); */
+  const selectedNumbers = usePlayStore((state) => state.loteryNumbersSelected);
+  const setSelectedNumbers = usePlayStore((state) => state.setLoteryNumbersSelected);
   const [randomNumbersToGenerate, setRandomNumbersToGenerate] =
     useState<number>(0);
 
@@ -23,13 +26,13 @@ const NumberSelectionPage = () => {
 
   // Generate random numbers
   const generateRandomNumbers = () => {
-    const randomNums: Set<number> = new Set(selectedNumbers);
+    const randomNums: Set<number> = new Set();
 
-    while (randomNums.size < randomNumbersToGenerate) {
+    while (randomNums.size < 5) {
       randomNums.add(Math.floor(Math.random() * 41));
     }
 
-    setSelectedNumbers(Array.from(randomNums).slice(0, 5));
+    setSelectedNumbers(Array.from(randomNums));
   };
 
   // Clear selection
