@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CustomConnectButton } from "~~/components/scaffold-stark/CustomConnectButton";
+import { Page } from "~~/interfaces/global";
+import { usePlayStore } from "~~/services/store/play";
+import { useContractFnStore } from "~~/services/store/contractFn";
 
 const PlayPage = () => {
   const router = useRouter();
@@ -44,9 +46,16 @@ const PlayPage = () => {
 
     return timeLeft;
   };
+  const setCurrentPage = useContractFnStore.getState().setCurrentPage;
+  const setLoteryId = usePlayStore.getState().setLoteryId;
 
   const [targetDate, setTargetDate] = useState(getNextDrawTime());
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetDate));
+
+  const handlePlayNow = (id: string) => {
+    router.push("/play/confirmation");
+    setLoteryId(id);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -67,15 +76,16 @@ const PlayPage = () => {
     return () => clearInterval(timer);
   }, [targetDate]);
 
+  useEffect(() => {
+    setLoteryId(null);
+    setCurrentPage(Page.Play);
+  }, [setLoteryId, setCurrentPage]);
+
   return (
     <div className="flex flex-col items-center justify-start min-h-screen text-white pt-8">
       <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 drop-shadow-lg animate-fade-in mt-6 md:mt-12 mb-6 pb-2">
         Ready to Win Big and Make an Impact?
       </h1>
-
-      <button className="mb-6 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-semibold rounded-full shadow-lg hover:opacity-90 transition">
-        <CustomConnectButton />
-      </button>
 
       <div className="flex flex-wrap justify-center gap-8">
         {[1, 2].map((_, index) => (
@@ -116,7 +126,7 @@ const PlayPage = () => {
 
             {/*  Button to redirect to confirmation page */}
             <button
-              onClick={() => router.push("/play/confirmation")}
+              onClick={() => handlePlayNow(index.toString())}
               className="w-full py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white font-semibold rounded-lg shadow-md hover:opacity-90 transition"
             >
               Play Now!

@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { usePlayStore } from "~~/services/store/play";
+import { ContractPlayUI } from "~~/app/_components/contractByApp/ContractPlayUI";
 
 const NumberSelectionPage = () => {
-  const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
+  const selectedNumbers = usePlayStore((state) => state.loteryNumbersSelected);
+  const setSelectedNumbers = usePlayStore(
+    (state) => state.setLoteryNumbersSelected,
+  );
   const [randomNumbersToGenerate, setRandomNumbersToGenerate] =
     useState<number>(0);
 
@@ -22,13 +26,21 @@ const NumberSelectionPage = () => {
 
   // Generate random numbers
   const generateRandomNumbers = () => {
-    const randomNums: Set<number> = new Set(selectedNumbers);
+    const randomNums: Set<number> = new Set();
 
     while (randomNums.size < randomNumbersToGenerate) {
       randomNums.add(Math.floor(Math.random() * 41));
     }
 
-    setSelectedNumbers(Array.from(randomNums).slice(0, 5));
+    const newNumbers = Array.from(randomNums);
+
+    if (selectedNumbers.length + newNumbers.length > 5) {
+      setSelectedNumbers(newNumbers);
+    } else {
+      setSelectedNumbers([...selectedNumbers, ...newNumbers]);
+    }
+
+    setSelectedNumbers(Array.from(randomNums));
   };
 
   // Clear selection
@@ -37,7 +49,7 @@ const NumberSelectionPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-transparent text-white pt-4 px-4">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-transparent text-white pt-4 px-4 mt-12">
       {/* Title */}
       <h1 className="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 drop-shadow-lg animate-fade-in mt-4 md:mt-6 mb-4 leading-[1.3] text-center">
         Select Your Numbers and <br /> Play for the Jackpot!
@@ -70,7 +82,7 @@ const NumberSelectionPage = () => {
               }
               className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md shadow-md cursor-pointer"
             >
-              {[0, 1, 2, 3, 4, 5].map((num) => (
+              {[1, 2, 3, 4, 5].map((num) => (
                 <option key={num} value={num}>
                   {num}
                 </option>
@@ -80,16 +92,18 @@ const NumberSelectionPage = () => {
 
           <button
             onClick={generateRandomNumbers}
-            className="mb-4 w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md shadow transition"
+            className="mb-4 w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Generate Random Numbers
           </button>
-          <button
-            onClick={clearSelection}
-            className="w-full py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-md shadow transition"
-          >
-            Clear
-          </button>
+          {selectedNumbers.length > 0 && (
+            <button
+              onClick={clearSelection}
+              className="w-full py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-md shadow transition"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         {/* Center Panel */}
@@ -136,20 +150,7 @@ const NumberSelectionPage = () => {
       </div>
 
       {/* Confirmation Button */}
-      <Link href="/play/confirmation">
-        <button
-          disabled={selectedNumbers.length !== 5}
-          className={`mt-8 px-6 py-3 ${
-            selectedNumbers.length === 5
-              ? "bg-green-500 hover:bg-green-600 animate-bounce"
-              : "bg-gray-500 cursor-not-allowed"
-          } text-white font-semibold rounded-full shadow-lg transition`}
-        >
-          {selectedNumbers.length === 5
-            ? "Confirm Selection"
-            : "Select 5 Numbers"}
-        </button>
-      </Link>
+      <ContractPlayUI contractName="Lottery" />
 
       {/* Go Back Button */}
       <button

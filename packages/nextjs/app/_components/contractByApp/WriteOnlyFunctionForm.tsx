@@ -11,7 +11,7 @@ import {
   FormErrorMessageState,
   getTopErrorMessage,
   isError,
-} from "~~/app/debug/_components/contract";
+} from "~~/app/_components/contractByApp";
 import { useTargetNetwork } from "~~/hooks/scaffold-stark/useTargetNetwork";
 import {
   useSendTransaction,
