@@ -8,7 +8,15 @@
 }
 
 body {
+  margin: 0;
+  padding: 0;
   min-height: 100vh;
+  background: linear-gradient(135deg, #3a0909 0%, #000000 100%);
+  background-attachment: fixed;
+  background-size: cover;
+  font-family: "Inter", sans-serif;
+  color: white;
+  overflow: hidden;
 }
 
 h1,
@@ -29,6 +37,8 @@ p {
 
 html {
   @apply overflow-y-scroll overflow-x-hidden;
+  -ms-overflow-style: none; /* para IE y Edge */
+  scrollbar-width: none; /* para Firefox */
 }
 
 body {
@@ -150,4 +160,87 @@ body {
     background: inherit;
     clip-path: polygon(100% 100%, 100% 0, 90% 100%);
   }
+}
+
+/* Play Page */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 1.5s ease-out forwards;
+}
+
+@keyframes carousel {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-carousel {
+  animation: carousel 30s linear infinite;
+  animation-play-state: running;
+}
+
+.animate-carousel:hover {
+  animation-play-state: paused;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+/*  Prizes Page */
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+th,
+td {
+  padding: 1rem;
+  text-align: center;
+}
+
+th {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+tr:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: scale(1.01);
+  transition: all 0.2s ease-in-out;
+}
+
+td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+}
+
+tr:last-child td {
+  border-bottom: none;
 }

@@ -14,10 +14,16 @@ import { useEffect, useMemo, useState } from "react";
 import ConnectModal from "./ConnectModal";
 import scaffoldConfig from "~~/scaffold.config";
 
+interface CustomConnectButtonProps {
+  isHeader?: boolean;
+}
+
 /**
  * Custom Connect Button (watch balance + custom design)
  */
-export const CustomConnectButton = () => {
+export const CustomConnectButton: React.FC<CustomConnectButtonProps> = ({
+  isHeader = false,
+}) => {
   useAutoConnect();
   const networkColor = useNetworkColor();
   const { targetNetwork } = useTargetNetwork();
@@ -44,7 +50,7 @@ export const CustomConnectButton = () => {
     }
   }, [account]);
 
-  if (status === "disconnected") return <ConnectModal />;
+  if (status === "disconnected") return <ConnectModal isHeader={isHeader} />;
 
   if (accountChainId !== targetNetwork.id) {
     return <WrongNetworkDropdown />;

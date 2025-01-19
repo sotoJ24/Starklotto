@@ -35,6 +35,7 @@
     "prettier": "^3.2.5"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "postcss": "^8.4.38"
   }
 }
