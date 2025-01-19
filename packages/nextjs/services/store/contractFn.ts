@@ -29,7 +29,9 @@ interface State {
 
 interface Actions {
   setCurrentPage: (newCurrentPage: Page) => void;
-  setFilteredFunctionsNames: (newFilteredFunctionsNames: FunctionAvailable) => void;
+  setFilteredFunctionsNames: (
+    newFilteredFunctionsNames: FunctionAvailable,
+  ) => void;
 }
 
 export const useContractFnStore = create(
@@ -37,8 +39,14 @@ export const useContractFnStore = create(
     (set) => ({
       currentPage: Page.Home,
       filteredFunctionsNames: functionAvailableByPage[Page.Home],
-      setCurrentPage: (newCurrentPage: Page) => set({ currentPage: newCurrentPage, filteredFunctionsNames: functionAvailableByPage[newCurrentPage] }),
-      setFilteredFunctionsNames: (newFilteredFunctionsNames: FunctionAvailable) => set({ filteredFunctionsNames: newFilteredFunctionsNames }),
+      setCurrentPage: (newCurrentPage: Page) =>
+        set({
+          currentPage: newCurrentPage,
+          filteredFunctionsNames: functionAvailableByPage[newCurrentPage],
+        }),
+      setFilteredFunctionsNames: (
+        newFilteredFunctionsNames: FunctionAvailable,
+      ) => set({ filteredFunctionsNames: newFilteredFunctionsNames }),
     }),
     { name: "contractFn" },
   ),

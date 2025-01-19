@@ -3,9 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
-import {
-  getTopErrorMessage,
-} from "~~/app/_components/contractByApp";
+import { getTopErrorMessage } from "~~/app/_components/contractByApp";
 import { useTargetNetwork } from "~~/hooks/scaffold-stark/useTargetNetwork";
 import {
   useSendTransaction,
@@ -39,7 +37,10 @@ export const BuyTicketForm = ({
   const { targetNetwork } = useTargetNetwork();
 
   const writeDisabled = useMemo(
-    () => !chain || chain?.network !== targetNetwork.network || walletStatus === "disconnected",
+    () =>
+      !chain ||
+      chain?.network !== targetNetwork.network ||
+      walletStatus === "disconnected",
     [chain, targetNetwork.network, walletStatus],
   );
 
@@ -48,7 +49,12 @@ export const BuyTicketForm = ({
     address: contractAddress,
   });
 
-  const { data: result, isPending: isLoading, sendAsync, error } = useSendTransaction({});
+  const {
+    data: result,
+    isPending: isLoading,
+    sendAsync,
+    error,
+  } = useSendTransaction({});
 
   // side effect for error logging
   useEffect(() => {
@@ -68,7 +74,7 @@ export const BuyTicketForm = ({
               ? [
                   contractInstance.populate(
                     "BuyTicket", // Nombre de la función en el contrato
-                    [selectedLotteryId, selectedNumbers], // Usar datos del store
+                    [2, selectedNumbers], // Usar datos del store
                   ),
                 ]
               : [],
@@ -81,27 +87,26 @@ export const BuyTicketForm = ({
     }
   };
 
-  const errorMsg = writeDisabled ? "Wallet not connected or on wrong network" : "";
+  const errorMsg = writeDisabled
+    ? "Wallet not connected or on wrong network"
+    : "";
 
   return (
-    <form onSubmit={onSubmit} className="py-5 space-y-3">
-      <p className="font-medium my-0">Comprar Ticket</p>
-      <div>
-        <p>ID de Lotería: {selectedLotteryId}</p>
-        <p>Números seleccionados: {selectedNumbers.join(', ')}</p>
-      </div>
-      <div>
-        <button
-          className="btn bg-gradient-dark btn-sm shadow-none border-none text-white"
-          disabled={writeDisabled || isLoading}
-          type="submit"
-        >
-          {isLoading && <span className="loading loading-spinner loading-xs"></span>}
-          Comprar Ticket 💸
-        </button>
-        {errorMsg && <p className="text-red-500">{errorMsg}</p>}
-      </div>
+    <form onSubmit={onSubmit} className="flex flex-col items-center py-5">
+      <button
+        disabled={selectedNumbers.length !== 5}
+        className={`mt-8 px-6 py-3 ${
+          selectedNumbers.length === 5
+            ? "bg-green-500 hover:bg-green-600 animate-bounce"
+            : "bg-gray-500 cursor-not-allowed"
+        } text-white font-semibold rounded-full shadow-lg transition`}
+      >
+        {selectedNumbers.length === 5
+          ? "Confirm Selection"
+          : `Select ${5 - selectedNumbers.length} Numbers`}
+      </button>
+      {errorMsg && <p className="text-red-500">{errorMsg}</p>}
       {result && <TxReceipt txResult={result} />}
     </form>
   );
-}; 
+};

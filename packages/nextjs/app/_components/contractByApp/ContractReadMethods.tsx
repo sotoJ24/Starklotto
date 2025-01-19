@@ -16,7 +16,9 @@ export const ContractReadMethods = ({
     return null;
   }
 
-  const filteredFunctionsNames = useContractFnStore((state) => state.filteredFunctionsNames);
+  const filteredFunctionsNames = useContractFnStore(
+    (state) => state.filteredFunctionsNames,
+  );
 
   const functionsToDisplay = getFunctionsByStateMutability(
     (deployedContractData.abi || []) as Abi,
@@ -39,7 +41,7 @@ export const ContractReadMethods = ({
   console.log(functionsToDisplay);
 
   const filteredFunctions = functionsToDisplay.filter((fn) =>
-    filteredFunctionsNames.read.includes(fn.fn.name.toLowerCase())
+    filteredFunctionsNames.read.includes(fn.fn.name.toLowerCase()),
   );
 
   return (

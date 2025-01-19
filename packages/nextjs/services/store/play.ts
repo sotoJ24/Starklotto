@@ -17,7 +17,8 @@ export const usePlayStore = create(
       loteryId: null,
       loteryNumbersSelected: [],
       setLoteryId: (loteryId: string | null) => set({ loteryId }),
-      setLoteryNumbersSelected: (loteryNumbersSelected: number[]) => set({ loteryNumbersSelected }),
+      setLoteryNumbersSelected: (loteryNumbersSelected: number[]) =>
+        set({ loteryNumbersSelected }),
     }),
     { name: "play" },
   ),

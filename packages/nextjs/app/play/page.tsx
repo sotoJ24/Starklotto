@@ -55,7 +55,7 @@ const PlayPage = () => {
   const handlePlayNow = (id: string) => {
     router.push("/play/confirmation");
     setLoteryId(id);
-  }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {

@@ -9,6 +9,7 @@ import {
 import { useContractFnStore } from "~~/services/store/contractFn";
 import { BuyTicketForm } from "./BuyTicketForm";
 import { WriteOnlyFunctionForm } from "./WriteOnlyFunctionForm";
+import { Page } from "~~/interfaces/global";
 
 export const ContractWriteMethods = ({
   onChange,
@@ -21,7 +22,10 @@ export const ContractWriteMethods = ({
     return null;
   }
 
-  const filteredFunctionsNames = useContractFnStore((state) => state.filteredFunctionsNames);
+  const currentPage = useContractFnStore((state) => state.currentPage);
+  const filteredFunctionsNames = useContractFnStore(
+    (state) => state.filteredFunctionsNames,
+  );
 
   const functionsToDisplay = getFunctionsByStateMutability(
     (deployedContractData.abi || []) as Abi,
@@ -36,28 +40,30 @@ export const ContractWriteMethods = ({
     return <>No write methods</>;
   }
 
-  const filteredFunctions = functionsToDisplay.filter((fn) => 
+  const filteredFunctions = functionsToDisplay.filter((fn) =>
     filteredFunctionsNames.write.includes(fn.fn.name.toLowerCase()),
   );
 
   return (
     <>
-      {filteredFunctions.map(({ fn }, idx) => (
-        <div key={idx}>
+      {filteredFunctions.map(({ fn }, idx) =>
+        currentPage === Page.Play ? (
+          <BuyTicketForm
+            key={idx}
+            abi={deployedContractData.abi as Abi}
+            onChange={onChange}
+            contractAddress={deployedContractData.address}
+          />
+        ) : (
           <WriteOnlyFunctionForm
-          abi={deployedContractData.abi as Abi}
-          abiFunction={fn}
-          onChange={onChange}
-          contractAddress={deployedContractData.address}
-          //   inheritedFrom={inheritedFrom}
-        />
-        <BuyTicketForm
-          abi={deployedContractData.abi as Abi}
-          onChange={onChange}
-          contractAddress={deployedContractData.address}
-        />
-        </div>
-      ))}
+            key={idx}
+            abiFunction={fn}
+            abi={deployedContractData.abi as Abi}
+            onChange={onChange}
+            contractAddress={deployedContractData.address}
+          />
+        ),
+      )}
     </>
   );
 };

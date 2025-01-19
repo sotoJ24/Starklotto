@@ -12,8 +12,6 @@ import { ChainWithAttributes } from "~~/utils/scaffold-stark";
  * Think about it as a global useState.
  */
 
-
-
 type GlobalState = {
   nativeCurrencyPrice: number;
   strkCurrencyPrice: number;
