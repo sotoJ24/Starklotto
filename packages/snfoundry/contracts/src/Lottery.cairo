@@ -46,12 +46,11 @@ trait ILottery<TContractState> {
     fn DrawNumbers(ref self: TContractState, drawId: u64);
     fn ClaimPrize(ref self: TContractState, drawId: u64, ticketId: felt252);
     fn CheckMatches( self: @TContractState, drawId: u64, number1: u16, number2: u16,number3: u16, number4: u16, number5: u16,) -> u8;
-    fn GetAccumulatedPrize(self: @TContractState) -> u256;
-    fn GetFixedPrize(self: @TContractState, matches: u8) -> u256;
     fn CreateNewDraw(ref self: TContractState, accumulatedPrize: u256);
     //=======================================================================================
     //get functions
-
+    fn GetAccumulatedPrize(self: @TContractState) -> u256;
+    fn GetFixedPrize(self: @TContractState, matches: u8) -> u256;
     fn GetDrawStatus(self: @TContractState, drawId: u64) -> bool;
     fn GetUserTickets(self: @TContractState, drawId: u64, player: ContractAddress) -> Array<felt252>;
     fn GetUserTicketsCount(self:  @TContractState, drawId: u64, player: ContractAddress) -> u32;
@@ -146,8 +145,8 @@ mod Lottery {
         // (usuario, drawId, índice)-> ticketId
         userTicketIds: Map<(ContractAddress, u64, u32), felt252>, 
          draws: Map<u64, Draw>,
-    tickets: Map<(u64, felt252), Ticket>,
-   // ownable component by openzeppelin
+         tickets: Map<(u64, felt252), Ticket>,
+        // ownable component by openzeppelin
          #[substorage(v0)]
         ownable: OwnableComponent::Storage,
 
@@ -158,7 +157,7 @@ mod Lottery {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress) {
-             self.ownable.initializer(owner);
+        self.ownable.initializer(owner);
         self.fixedPrize4Matches.write(4000000000000000000);
         self.fixedPrize3Matches.write(3000000000000000000);
         self.fixedPrize2Matches.write(2000000000000000000);
@@ -195,13 +194,6 @@ mod Lottery {
             let n3 = *numbers.at(2);
             let n4 = *numbers.at(3);
             let n5 = *numbers.at(4);
-
-            // Verificar que los números no son 0
-            assert(n1 > 0, 'number1 is 0');
-            assert(n2 > 0, 'number2 is 0');
-            assert(n3 > 0, 'number3 is 0');
-            assert(n4 > 0, 'number4 is 0');
-            assert(n5 > 0, 'number5 is 0');
 
             let ticketNew = Ticket {
                 player: get_caller_address(),
@@ -516,10 +508,11 @@ mod Lottery {
 
     //OK
     fn GenerateRandomNumbers() -> Array<u16> {
+        //     TODO: We need to use VRF de Pragma Oracle to generate random numbers
         let mut numbers = ArrayTrait::new();
         let blockTimestamp = get_block_timestamp();
 
-        // Usar solo timestamp para generar números (para testing)
+       
         let mut count = 0;
         let mut usedNumbers: Felt252Dict<bool> = Default::default();
 

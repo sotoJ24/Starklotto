@@ -7,7 +7,7 @@ const deployedContracts = {
   sepolia: {
     Lottery: {
       address:
-        "0x7915d32ffeb8b65ae6f5c080fc53fd5d674bed587aac2f74f1cb2c0e4c4cf81",
+        "0x190cc575bacfcc57e3fc5f365be0201a1c2be85d3e2d76132be7dd6eeef945d",
       abi: [
         {
           type: "impl",
@@ -182,6 +182,18 @@ const deployedContracts = {
             },
             {
               type: "function",
+              name: "CreateNewDraw",
+              inputs: [
+                {
+                  name: "accumulatedPrize",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
               name: "GetAccumulatedPrize",
               inputs: [],
               outputs: [
@@ -206,18 +218,6 @@ const deployedContracts = {
                 },
               ],
               state_mutability: "view",
-            },
-            {
-              type: "function",
-              name: "CreateNewDraw",
-              inputs: [
-                {
-                  name: "accumulatedPrize",
-                  type: "core::integer::u256",
-                },
-              ],
-              outputs: [],
-              state_mutability: "external",
             },
             {
               type: "function",
@@ -540,7 +540,7 @@ const deployedContracts = {
         },
       ],
       classHash:
-        "0x122363bfc830fca90297374f4a6f6f9b13b58be273decc292e9f569c16a5f69",
+        "0x4a1dd0bcb29e04c9156e1426c16963c291ee7296d7c94574bbb2c2012d238e7",
     },
   },
 } as const;
