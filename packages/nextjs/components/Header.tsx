@@ -10,6 +10,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { CustomConnectButton } from "./scaffold-stark/CustomConnectButton";
+import { useRouter } from "next/navigation";
 
 const menuLinks = [
   { label: "Home", href: "/" },
@@ -21,10 +22,15 @@ const menuLinks = [
 ];
 
 export const Header = () => {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleProfileClick = () => {
+    router.push("/profile");
+  };
 
   // Detectar scroll para cambiar el fondo
   useEffect(() => {
@@ -79,7 +85,10 @@ export const Header = () => {
           <button className="mb-6 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-semibold rounded-full shadow-lg hover:opacity-90 transition">
             <CustomConnectButton isHeader={true} />
           </button>
-          <button className="p-2 bg-transparent hover:bg-gray-700 rounded-full transition">
+          <button
+            className="p-2 bg-transparent hover:bg-gray-700 rounded-full transition"
+            onClick={handleProfileClick}
+          >
             <UserIcon className="h-6 w-6 text-white" />
           </button>
         </div>

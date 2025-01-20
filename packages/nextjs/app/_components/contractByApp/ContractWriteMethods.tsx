@@ -47,7 +47,7 @@ export const ContractWriteMethods = ({
   return (
     <>
       {filteredFunctions.map(({ fn }, idx) =>
-        currentPage === Page.Play ? (
+        currentPage === Page.Play && fn.name.toLowerCase() === "buyticket" ? (
           <BuyTicketForm
             key={idx}
             abi={deployedContractData.abi as Abi}

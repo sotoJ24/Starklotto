@@ -280,6 +280,8 @@ export const decodeContractResponse = ({
       ? decodedResult
       : JSON.stringify(decodedResult, replacer);
   }
+
+  console.log("decodedResult", decodedResult);
   return decodedResult;
 };
 
