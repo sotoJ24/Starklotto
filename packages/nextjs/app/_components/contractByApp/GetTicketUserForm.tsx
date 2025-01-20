@@ -102,6 +102,7 @@ export const GetTicketUserForm = ({
 
       {data !== null && data !== undefined && (
         <>
+          <h1 className="text-center text-2xl font-bold">Tickets Found: {ticketsId.length}</h1>
           <p className="text-center text-lg font-bold">Search Ticket</p>
           <select
             value={selectedTicketId}
