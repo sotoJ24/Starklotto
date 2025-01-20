@@ -67,7 +67,7 @@ export const GetTicketInfoForm = ({
       };
       handleRead();
     }
-  }, [selectedTicketId, userAddress, loteryId]);
+  }, [selectedTicketId, userAddress, loteryId, refetch]);
 
   return (
     <div className="flex flex-col gap-3 py-5 first:pt-0 last:pb-1">
@@ -77,7 +77,9 @@ export const GetTicketInfoForm = ({
             <span className="loading loading-spinner loading-xs"></span>
           ) : (
             data !== null &&
-            data !== undefined && (
+            data !== undefined &&
+            abi &&
+            abiFunction && (
               <div className="bg-input text-sm px-4 py-1.5 break-words">
                 {
                   <TicketInfoDisplay

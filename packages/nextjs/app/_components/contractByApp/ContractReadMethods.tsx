@@ -19,6 +19,16 @@ export const ContractReadMethods = ({
   deployedContractData: Contract<ContractName>;
 }) => {
   const currentPage = useContractFnStore((state) => state.currentPage);
+  const { address: accountAddress } = useAccount();
+  const checkSumAddress = useMemo(() => {
+    if (!accountAddress) return undefined;
+
+    if (accountAddress.toLowerCase() === "0x") {
+      return "0x0";
+    }
+
+    return getChecksumAddress(accountAddress);
+  }, [accountAddress]);
   const filteredFunctionsNames = useContractFnStore(
     (state) => state.filteredFunctionsNames,
   );
@@ -47,17 +57,6 @@ export const ContractReadMethods = ({
   const filteredFunctions = functionsToDisplay.filter((fn) =>
     filteredFunctionsNames.read.includes(fn.fn.name.toLowerCase()),
   );
-
-  const { address: accountAddress } = useAccount();
-  const checkSumAddress = useMemo(() => {
-    if (!accountAddress) return undefined;
-
-    if (accountAddress.toLowerCase() === "0x") {
-      return "0x0";
-    }
-
-    return getChecksumAddress(accountAddress);
-  }, [accountAddress]);
 
   return (
     <>
