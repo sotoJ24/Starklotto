@@ -137,9 +137,14 @@ export const GetTicketUserForm = ({
               />
             </>
           ) : (
-            <Link href="/play" className="text-center text-lg font-bold">
-              Get Tickets First!
-            </Link>
+            <div className="flex justify-center">
+              <Link
+                href="/play"
+                className="text-center text-lg font-bold bg-yellow-500 hover:bg-yellow-600 animate-bounce px-6 py-3 rounded-full shadow-lg transition"
+              >
+                Get Tickets First!
+              </Link>
+            </div>
           )}
         </>
       )}

@@ -48,6 +48,7 @@ const PlayPage = () => {
   };
   const setCurrentPage = useContractFnStore.getState().setCurrentPage;
   const setLoteryId = usePlayStore.getState().setLoteryId;
+  const setSelectedNumbers = usePlayStore.getState().setLoteryNumbersSelected;
 
   const [targetDate, setTargetDate] = useState(getNextDrawTime());
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetDate));
@@ -79,7 +80,8 @@ const PlayPage = () => {
   useEffect(() => {
     setLoteryId(null);
     setCurrentPage(Page.Play);
-  }, [setLoteryId, setCurrentPage]);
+    setSelectedNumbers([]);
+  }, [setLoteryId, setCurrentPage, setSelectedNumbers]);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen text-white pt-8">
