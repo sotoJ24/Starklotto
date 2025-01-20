@@ -3,7 +3,6 @@ import { ScaffoldStarkAppWithProviders } from "~~/components/ScaffoldStarkAppWit
 import "~~/styles/globals.css";
 import { ThemeProvider } from "~~/components/ThemeProvider";
 import Header from "~~/components/Header";
-/* import Footer from "~~/components/Footer"; */
 
 export const metadata: Metadata = {
   title: "StarkLotto",
@@ -21,7 +20,6 @@ const ScaffoldStarkApp = ({ children }: { children: React.ReactNode }) => {
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}
             </main>
-            {/* <Footer /> */}
           </ScaffoldStarkAppWithProviders>
         </ThemeProvider>
       </body>
