@@ -59,7 +59,8 @@ const Notification = ({
           backgroundGradient[status]
         } ${t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}
         style={{
-          boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.3), 0px 0px 20px rgba(0, 0, 0, 0.2)",
+          boxShadow:
+            "0px 4px 15px rgba(0, 0, 0, 0.3), 0px 0px 20px rgba(0, 0, 0, 0.2)",
         }}
       >
         <div className="flex items-center space-x-3">
@@ -77,7 +78,7 @@ const Notification = ({
     {
       duration: status === "loading" ? Infinity : duration,
       position,
-    }
+    },
   );
 };
 
