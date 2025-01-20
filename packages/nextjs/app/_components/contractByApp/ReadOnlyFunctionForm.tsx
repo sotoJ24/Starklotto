@@ -12,7 +12,7 @@ import {
   isError,
   getTopErrorMessage,
   decodeContractResponse,
-} from "~~/app/debug/_components/contract";
+} from "~~/app/_components/contractByApp";
 import { AbiFunction } from "~~/utils/scaffold-stark/contract";
 import { BlockNumber } from "starknet";
 import { useContract, useReadContract } from "@starknet-react/core";

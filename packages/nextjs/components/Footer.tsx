@@ -81,18 +81,36 @@ export const Footer = () => {
               </a>
             </div>
 
-            <div className="text-center">
-              <a
-                href="https://t.me/+wO3PtlRAreo4MDI9"
-                target="_blank"
-                rel="noreferrer"
-                className="link"
-              >
-                Support
-              </a>
-            </div>
-          </div>
-        </ul>
+        {/* Enlaces de Redes Sociales */}
+        <div className="flex items-center space-x-4 mt-4 md:mt-0">
+          <Link
+            href="https://github.com/future-minds7"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span className="text-white hover:text-yellow-400 transition">
+              GitHub
+            </span>
+          </Link>
+          <Link
+            href="https://x.com/futureminds_7"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span className="text-white hover:text-yellow-400 transition">
+              Twitter
+            </span>
+          </Link>
+          <Link
+            href="https://t.me/+wO3PtlRAreo4MDI9"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span className="text-white hover:text-yellow-400 transition">
+              Telegram
+            </span>
+          </Link>
+        </div>
       </div>
     </div>
   );
