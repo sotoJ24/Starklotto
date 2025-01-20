@@ -65,7 +65,7 @@ export const GetTicketUserForm = ({
   };
 
   useEffect(() => {
-    if (data) {
+    if (data && abi && getUserTickets) {
       setTicketsId(
         JSON.parse(
           decodeContractResponse({
@@ -77,7 +77,7 @@ export const GetTicketUserForm = ({
         ),
       );
     }
-  }, [data]);
+  }, [data, abi, getUserTickets]);
 
   return (
     <div className="flex flex-col gap-3 first:pt-0 last:pb-1">
