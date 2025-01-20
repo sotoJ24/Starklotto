@@ -277,6 +277,8 @@ export const LAST_CONNECTED_TIME_LOCALSTORAGE_KEY = "lastConnectedTime";
 export const CONTACT_US_SHEET_SCRIPT =
   "https://script.google.com/macros/s/AKfycbwZM3a7r4Eom2WjjoJ3OF42o76VCF1OcXYFF2OdKKlyh_0_oErG_NemgqtM_2MOSas7/exec";
 
+export const LOTT_CONTRACT_NAME = "Lottery";
+
 export {
   devnetEthClassHash,
   devnetStrkClassHash,
