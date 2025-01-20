@@ -9,7 +9,7 @@ type FunctionAvailable = {
 
 const functionAvailableByPage: Record<Page, FunctionAvailable> = {
   [Page.Play]: {
-    read: ["getusertickets", "getticketinfo"],
+    read: [],
     write: ["buyticket"],
   },
   [Page.HowItWorks]: {
@@ -18,6 +18,10 @@ const functionAvailableByPage: Record<Page, FunctionAvailable> = {
   },
   [Page.Home]: {
     read: [],
+    write: [],
+  },
+  [Page.Profile]: {
+    read: ["getusertickets", "getticketinfo"],
     write: [],
   },
 };

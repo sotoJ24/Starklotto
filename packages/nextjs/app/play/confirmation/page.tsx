@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayStore } from "~~/services/store/play";
 import { ContractPlayUI } from "~~/app/_components/contractByApp/ContractPlayUI";
+import { LOTT_CONTRACT_NAME } from "~~/utils/Constants";
 
 const NumberSelectionPage = () => {
   const selectedNumbers = usePlayStore((state) => state.loteryNumbersSelected);
@@ -150,7 +151,7 @@ const NumberSelectionPage = () => {
       </div>
 
       {/* Confirmation Button */}
-      <ContractPlayUI contractName="Lottery" />
+      <ContractPlayUI contractName={LOTT_CONTRACT_NAME} />
 
       {/* Go Back Button */}
       <button
