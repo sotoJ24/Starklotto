@@ -11,6 +11,7 @@ import { AbiFunction } from "~~/utils/scaffold-stark/contract";
 import { BlockNumber } from "starknet";
 import { useContract, useReadContract } from "@starknet-react/core";
 import { GetTicketInfoForm } from "./GetTicketInfoForm";
+import Link from "next/link";
 
 type GetTicketUserFormProps = {
   loteryId: number;
@@ -105,33 +106,46 @@ export const GetTicketUserForm = ({
           <h1 className="text-center text-2xl font-bold">
             Tickets Found: {ticketsId.length}
           </h1>
-          <p className="text-center text-lg font-bold">Search Ticket</p>
-          <select
-            value={selectedTicketId}
-            onChange={(e) => setSelectedTicketId(e.target.value)}
-            className="border border-gray-300 rounded-md p-2 mb-4 bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select a ticket</option>
-            {ticketsId.length > 0 ? (
-              ticketsId.map((ticketId, index) => (
-                <option
-                  key={ticketId}
-                  value={ticketId}
-                >{`Ticket ${index + 1}`}</option>
-              ))
-            ) : (
-              <option value="">No tickets found</option>
-            )}
-          </select>
+          {ticketsId.length > 0 ? (
+            <>
+              <p className="text-center text-lg font-bold">Search Ticket</p>
+              <select
+                value={selectedTicketId}
+                onChange={(e) => setSelectedTicketId(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 mb-4 bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select a ticket</option>
+                {ticketsId.length > 0 ? (
+                  ticketsId.map((ticketId, index) => (
+                    <option
+                      key={ticketId}
+                      value={ticketId}
+                    >{`Ticket ${index + 1}`}</option>
+                  ))
+                ) : (
+                  <option value="">No tickets found</option>
+                )}
+              </select>
 
-          <GetTicketInfoForm
-            loteryId={2}
-            userAddress={userAddress}
-            selectedTicketId={selectedTicketId || ""}
-            contractAddress={contractAddress}
-            abiFunction={getTicketInfo}
-            abi={abi}
-          />
+              <GetTicketInfoForm
+                loteryId={2}
+                userAddress={userAddress}
+                selectedTicketId={selectedTicketId || ""}
+                contractAddress={contractAddress}
+                abiFunction={getTicketInfo}
+                abi={abi}
+              />
+            </>
+          ) : (
+            <div className="flex justify-center">
+              <Link
+                href="/play"
+                className="text-center text-lg font-bold bg-yellow-500 hover:bg-yellow-600 animate-bounce px-6 py-3 rounded-full shadow-lg transition"
+              >
+                Get Tickets First!
+              </Link>
+            </div>
+          )}
         </>
       )}
     </div>

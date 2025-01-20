@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
 
-import { getTopErrorMessage } from "~~/app/_components/contractByApp";
 import { useTargetNetwork } from "~~/hooks/scaffold-stark/useTargetNetwork";
 import {
   useSendTransaction,
@@ -11,8 +9,6 @@ import {
   useContract,
 } from "@starknet-react/core";
 import { Address } from "@starknet-react/chains";
-import { InvokeTransactionReceiptResponse } from "starknet";
-import { TxReceipt } from "./TxReceipt";
 import { useTransactor } from "~~/hooks/scaffold-stark";
 import { useAccount } from "~~/hooks/useAccount";
 import { usePlayStore } from "~~/services/store/play";
@@ -49,12 +45,7 @@ export const BuyTicketForm = ({
     address: contractAddress,
   });
 
-  const {
-    data: result,
-    isPending: isLoading,
-    sendAsync,
-    error,
-  } = useSendTransaction({});
+  const { sendAsync, error } = useSendTransaction({});
 
   // side effect for error logging
   useEffect(() => {
@@ -106,7 +97,6 @@ export const BuyTicketForm = ({
           : `Select ${5 - selectedNumbers.length} Numbers`}
       </button>
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
-      {result && <TxReceipt txResult={result} />}
     </form>
   );
 };
