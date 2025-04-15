@@ -1,6 +1,4 @@
 mod Lottery;
-mod YourContract;
-#[cfg(test)]
-mod test {
-    mod TestContract;
-}
+mod StarkPlayERC20;
+mod StarkPlayVault;
+
