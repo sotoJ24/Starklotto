@@ -5,8 +5,8 @@ import type React from "react";
 import { Search } from "lucide-react";
 import TicketCard from "./ticket-card";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { tickets } from "~~/components/profile/_data";
-import { useState, useEffect } from "react";
 import TicketEmptyState from "../TicketEmptyState";
 import TicketErrorState from "../TicketErrorState";
 
@@ -26,6 +26,7 @@ export default function TicketsSection({
   );
   const [ticketsData, setTicketsData] = useState<typeof tickets>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
 
   // Simulate loading tickets
   useEffect(() => {
@@ -89,8 +90,45 @@ export default function TicketsSection({
         ? true
         : ticket.id.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesTab && matchesSearch;
-  });
+    return (matchesTab && matchesSearch) && (matchesTab && ticketDateFilter(ticket, dateFilter))
+  })
+
+  function ticketDateFilter(ticket: typeof tickets[0], filter: string): boolean {
+    if (filter !== "" && filter !== "all") {
+      const now = new Date();
+      let endDate = new Date();
+      let startDate = new Date();
+      switch (filter) {
+        case "7-days":
+          startDate.setDate(endDate.getDate() - 7);
+          break;
+        case "last-month":
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          break;
+        case "previous":
+          startDate = new Date(now.getFullYear() - 1, 0, 0);
+          break;
+      }
+
+      const ticketDate = new Date(ticket.createdAtTimestamp);
+      if (ticketDate >= startDate && ticketDate <= endDate) {
+        return true
+      }
+      return false
+    }
+    return true
+  }
+
+  function onSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setSearchQuery(value);
+  }
+
+  function onDateFilterChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.target.value;
+    setDateFilter(value);
+  }
 
   return (
     <div>
@@ -126,13 +164,23 @@ export default function TicketsSection({
             >
               <Search className="text-gray-400 h-4 w-4 mr-2 group-hover:text-purple-400 transition-colors" />
               <input
+                value={searchQuery}
+                onChange={onSearchChange}
                 type="text"
                 placeholder="Search tickets..."
                 className="bg-transparent border-none outline-none text-white placeholder-gray-400 text-sm w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <select
+              value={dateFilter}
+              onChange={onDateFilterChange}
+              className="select select-primary select-sm w-full max-w-xs px-5 py-1.5 rounded-lg transition-all duration-200 text-sm bg-[#9042F0] text-white">
+              <option value="" disabled selected>Date filter</option>
+              <option value="all">All</option>
+              <option value="7-days">Last days</option>
+              <option value="last-month">Last month</option>
+              <option value="previous">Previous</option>
+            </select>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -238,7 +286,7 @@ export default function TicketsSection({
             No tickets found matching "{searchQuery}"
           </p>
           <button
-            onClick={() => setSearchQuery("")}
+            onClick={() => { setSearchQuery(""); setDateFilter("") }}
             className="px-4 py-2 rounded-lg bg-purple-900/30 text-purple-400 border border-purple-700/30 hover:bg-purple-900/40 transition-all duration-300"
           >
             Clear search
@@ -287,11 +335,10 @@ export function TabButton({
       whileHover={!active ? { scale: 1.05 } : {}}
       whileTap={!active ? { scale: 0.95 } : {}}
       onClick={onClick}
-      className={`px-5 py-1.5 rounded-lg transition-all duration-200 text-sm ${
-        active
-          ? "bg-[#9042F0] text-white shadow-md shadow-purple-900/30"
-          : "text-gray-400 hover:text-white"
-      } ${className}`}
+      className={`px-5 py-1.5 rounded-lg transition-all duration-200 text-sm ${active
+        ? "bg-[#9042F0] text-white shadow-md shadow-purple-900/30"
+        : "text-gray-400 hover:text-white"
+        } ${className}`}
     >
       {label}
     </motion.button>
