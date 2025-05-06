@@ -14,6 +14,7 @@ struct Ticket {
     number5: u16,
     claimed: bool,
     drawId: u64,
+    timestamp: u64,
 }
 
 #[derive(Drop, Serde, starknet::Store)]
@@ -121,11 +122,14 @@ mod Lottery {
 
     #[derive(Drop, starknet::Event)]
     struct TicketPurchased {
+        #[key]
         drawId: u64,
+        #[key]
         player: ContractAddress,
         ticketId: felt252,
         numbers: Array<u16>,
         ticketCount: u32,
+        timestamp: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -202,6 +206,7 @@ mod Lottery {
             assert(self.ValidateNumbers(@numbers), 'Invalid numbers');
             let draw = self.draws.read(drawId);
             assert(draw.isActive, 'Draw is not active');
+            let current_timestamp = get_block_timestamp();
 
             // Process the payment
             let strk_play_token_dispatcher = IERC20Dispatcher {
@@ -244,6 +249,7 @@ mod Lottery {
                 number5: n5,
                 claimed: false,
                 drawId: drawId,
+                timestamp: current_timestamp,
             };
 
             let ticketId = GenerateTicketId(ref self);
@@ -251,15 +257,21 @@ mod Lottery {
 
             //Incrementar contador y guardar ticketId
 
-            let mut count = self.userTicketCount.read((get_caller_address(), drawId));
+            let caller = get_caller_address();
+            let mut count = self.userTicketCount.read((caller, drawId));
             count += 1;
-            self.userTicketCount.write((get_caller_address(), drawId), count);
-            self.userTicketIds.write((get_caller_address(), drawId, count), ticketId);
+            self.userTicketCount.write((caller, drawId), count);
+            self.userTicketIds.write((caller, drawId, count), ticketId);
 
             self
                 .emit(
                     TicketPurchased {
-                        drawId, player: get_caller_address(), ticketId, numbers, ticketCount: count,
+                        drawId,
+                        player: caller,
+                        ticketId,
+                        numbers,
+                        ticketCount: count,
+                        timestamp: current_timestamp,
                     },
                 );
         }
