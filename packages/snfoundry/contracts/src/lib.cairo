@@ -1,5 +1,4 @@
 mod Lottery;
 mod LottoTicketNFT;
-pub mod StarkPlayERC20;
-pub mod StarkPlayVault;
-
+mod StarkPlayERC20;
+mod StarkPlayVault;
