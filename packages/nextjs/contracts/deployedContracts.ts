@@ -7,7 +7,7 @@ const deployedContracts = {
   devnet: {
     Lottery: {
       address:
-        "0x58ec384e3a821f5d9096fb35ec7894a4eaef987ebf47e934eb816a6064b22b9",
+        "0x19f2682599ee7fd597187558d89c6aafabdfcd2969231aa706f4d4dc88d16d6",
       abi: [
         {
           type: "impl",
@@ -1693,7 +1693,7 @@ const deployedContracts = {
         },
       ],
       classHash:
-        "0xae628508c842bccc35f9b48f4139e1ea474d37e3f4e89c05ab00349efefced",
+        "0x2f1ed0054b4fea83d34a0bcedabea240800d13e0c5c303139ecd8ed18fc533a",
     },
     StarkPlayVault: {
       address:
