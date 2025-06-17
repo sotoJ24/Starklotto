@@ -122,6 +122,7 @@ mod Lottery {
         DrawCompleted: DrawCompleted,
         PrizeClaimed: PrizeClaimed,
         UserTicketsInfo: UserTicketsInfo,
+        JackpotIncreased: JackpotIncreased,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -159,6 +160,15 @@ mod Lottery {
         player: ContractAddress,
         drawId: u64,
         tickets: Array<Ticket>,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct JackpotIncreased {
+        #[key]
+        drawId: u64,
+        previousAmount: u256,
+        newAmount: u256,
+        timestamp: u64,
     }
 
     //=======================================================================================
@@ -429,7 +439,11 @@ mod Lottery {
         //=======================================================================================
         //OK
         fn CreateNewDraw(ref self: ContractState, accumulatedPrize: u256) {
+            // Validate that the accumulated prize is not negative
+            assert(accumulatedPrize >= 0, 'Invalid accumulated prize: cannot be negative');
+            
             let drawId = self.currentDrawId.read() + 1;
+            let previousAmount = self.accumulatedPrize.read();
             let newDraw = Draw {
                 drawId,
                 accumulatedPrize: accumulatedPrize,
@@ -445,6 +459,13 @@ mod Lottery {
             };
             self.draws.entry(drawId).write(newDraw);
             self.currentDrawId.write(drawId);
+
+            self.emit(JackpotIncreased {
+                drawId,
+                previousAmount,
+                newAmount: accumulatedPrize,
+                timestamp: get_block_timestamp()
+            });
         }
 
         //OK
