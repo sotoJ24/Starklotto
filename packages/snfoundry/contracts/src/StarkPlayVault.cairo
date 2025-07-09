@@ -5,6 +5,7 @@ pub trait IStarkPlayVault<TContractState> {
     //=======================================================================================
     //get functions
     fn GetFeePercentage(self: @TContractState) -> u64;
+    fn GetAccumulatedPrizeConversionFees(self: @TContractState) -> u256;
     fn get_mint_limit(self: @TContractState) -> u256;
     fn get_burn_limit(self: @TContractState) -> u256;
 
@@ -13,6 +14,7 @@ pub trait IStarkPlayVault<TContractState> {
     fn setMintLimit(ref self: TContractState, new_limit: u256);
     fn setBurnLimit(ref self: TContractState, new_limit: u256);
     fn setFeePercentage(ref self: TContractState, new_fee: u64) -> bool;
+    fn convert_to_strk(ref self: TContractState, amount: u256);
     //=======================================================================================
     //mint functions
     fn mint_strk_play(self: @TContractState, user: ContractAddress, amount: u256) -> bool;
@@ -83,6 +85,7 @@ pub mod StarkPlayVault {
         burnLimit: u256,
         reentrant_locked: bool,
         accumulatedFee: u256,
+        accumulatedPrizeConversionFees: u256,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
     }
@@ -106,6 +109,7 @@ pub mod StarkPlayVault {
         self.burnLimit.write(MAX_BURN_AMOUNT);
         self.paused.write(false);
         self.reentrant_locked.write(false);
+        self.accumulatedPrizeConversionFees.write(0);
         //set fee percentage
         self.feePercentage.write(feePercentage);
         self.feePercentageMin.write(10); //0.1%
@@ -351,15 +355,29 @@ pub mod StarkPlayVault {
         let prizeDispatcher = IPrizeTokenDispatcher { contract_address: starkPlayContractAddress };
         let prize_balance = prizeDispatcher.get_prize_balance(user);
         assert(prize_balance >= amount, 'Insufficient prize tokens');
+        
+        // Calculate conversion fee
+        let prizeFeeAmount = (amount * self.feePercentage.read().into()) / BASIS_POINTS_DENOMINATOR;
+        let netAmount = amount - prizeFeeAmount;
+        
+        // Burn the full amount of prize tokens from user
         let mut burnDispatcher = IBurnableDispatcher { contract_address: starkPlayContractAddress };
         burnDispatcher.burn_from(user, amount);
         self.totalStarkPlayBurned.write(self.totalStarkPlayBurned.read() + amount);
         self.emit(StarkPlayBurned { user, amount });
+        
+        // Update accumulated prize conversion fees
+        self.accumulatedPrizeConversionFees.write(self.accumulatedPrizeConversionFees.read() + prizeFeeAmount);
+        
+        // Emit FeeCollected event
+        self.emit(FeeCollected { user, amount: prizeFeeAmount, accumulatedFee: self.accumulatedPrizeConversionFees.read() });
+        
+        // Transfer the net amount (after deducting fee) to user
         let strk_contract_address = contract_address_const::<TOKEN_STRK_ADDRESS>();
         let strk_dispatcher = IERC20Dispatcher { contract_address: strk_contract_address };
-        strk_dispatcher.transfer(user, amount);
-        self.totalSTRKStored.write(self.totalSTRKStored.read() - amount);
-        self.emit(ConvertedToSTRK { user, amount });
+        strk_dispatcher.transfer(user, netAmount);
+        self.totalSTRKStored.write(self.totalSTRKStored.read() - netAmount);
+        self.emit(ConvertedToSTRK { user, amount: netAmount });
     }
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //private functions
@@ -424,6 +442,14 @@ pub mod StarkPlayVault {
     impl StarkPlayVaultImpl of IStarkPlayVault<ContractState> {
         fn GetFeePercentage(self: @ContractState) -> u64 {
             self.feePercentage.read()
+        }
+
+        fn GetAccumulatedPrizeConversionFees(self: @ContractState) -> u256 {
+            self.accumulatedPrizeConversionFees.read()
+        }
+
+        fn convert_to_strk(ref self: ContractState, amount: u256) {
+            convert_to_strk(ref self, amount)
         }
 
         fn setMintLimit(ref self: ContractState, new_limit: u256) {
