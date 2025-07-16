@@ -17,7 +17,7 @@ struct Ticket {
     timestamp: u64,
 }
 
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Drop, Copy, Serde, starknet::Store)]
 //serde for serialization and deserialization
 struct Draw {
     drawId: u64,
@@ -35,11 +35,22 @@ struct Draw {
     endTime: u64,
 }
 
+#[derive(Drop, Copy, Serde, starknet::Store)]
+//serde for serialization and deserialization
+struct JackpotEntry {
+    drawId: u64,
+    jackpotAmount: u256,
+    startTime: u64,
+    endTime: u64,
+    isActive: bool,
+    isCompleted: bool,
+}
+
 //=======================================================================================
 //interface
 //=======================================================================================
 #[starknet::interface]
-trait ILottery<TContractState> {
+pub trait ILottery<TContractState> {
     //=======================================================================================
     //set functions
     fn Initialize(ref self: TContractState, ticketPrice: u256, accumulatedPrize: u256);
@@ -75,6 +86,21 @@ trait ILottery<TContractState> {
     ) -> Ticket;
     fn GetTicketCurrentId(self: @TContractState) -> u64;
     fn GetWinningNumbers(self: @TContractState, drawId: u64) -> Array<u16>;
+    fn get_jackpot_history(self: @TContractState) -> Array<JackpotEntry>;
+
+    // Getter functions for private structures
+    fn GetTicketPlayer(self: @TContractState, drawId: u64, ticketId: felt252) -> ContractAddress;
+    fn GetTicketNumbers(self: @TContractState, drawId: u64, ticketId: felt252) -> Array<u16>;
+    fn GetTicketClaimed(self: @TContractState, drawId: u64, ticketId: felt252) -> bool;
+    fn GetTicketDrawId(self: @TContractState, drawId: u64, ticketId: felt252) -> u64;
+    fn GetTicketTimestamp(self: @TContractState, drawId: u64, ticketId: felt252) -> u64;
+
+    fn GetJackpotEntryDrawId(self: @TContractState, drawId: u64) -> u64;
+    fn GetJackpotEntryAmount(self: @TContractState, drawId: u64) -> u256;
+    fn GetJackpotEntryStartTime(self: @TContractState, drawId: u64) -> u64;
+    fn GetJackpotEntryEndTime(self: @TContractState, drawId: u64) -> u64;
+    fn GetJackpotEntryIsActive(self: @TContractState, drawId: u64) -> bool;
+    fn GetJackpotEntryIsCompleted(self: @TContractState, drawId: u64) -> bool;
     //=======================================================================================
 
 }
@@ -83,7 +109,7 @@ trait ILottery<TContractState> {
 //contract
 //=======================================================================================
 #[starknet::contract]
-mod Lottery {
+pub mod Lottery {
     use core::array::{Array, ArrayTrait};
     use core::dict::{Felt252Dict, Felt252DictTrait};
     use core::traits::TryInto;
@@ -93,10 +119,10 @@ mod Lottery {
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use starknet::{
-        ContractAddress, get_block_timestamp, get_caller_address,
+        ContractAddress, contract_address_const, get_block_timestamp, get_caller_address,
         get_contract_address,
     };
-    use super::{Draw, ILottery, Ticket};
+    use super::{Draw, ILottery, JackpotEntry, Ticket};
 
     // ownable component by openzeppelin
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -227,7 +253,7 @@ mod Lottery {
             self.ownable.assert_only_owner();
             self.ticketPrice.write(ticketPrice);
             self.accumulatedPrize.write(accumulatedPrize);
-            self.CreateNewDraw(0);
+            self.CreateNewDraw(accumulatedPrize);
         }
 
         //=======================================================================================
@@ -236,11 +262,11 @@ mod Lottery {
             // Reentrancy guard at the very beginning
             assert(!self.reentrancy_guard.read(), 'ReentrancyGuard: reentrant call');
             self.reentrancy_guard.write(true);
-            
+
             // Input validation
             assert(self.ValidateNumbers(@numbers), 'Invalid numbers');
             assert(numbers.len() == 5, 'Invalid numbers length');
-            
+
             let draw = self.draws.entry(drawId).read();
             assert(draw.isActive, 'Draw is not active');
 
@@ -255,19 +281,22 @@ mod Lottery {
             // 1. Get ticket price and user/vault addresses
             let ticket_price = self.ticketPrice.read();
             let user = get_caller_address();
-            let vault_address: ContractAddress = STRK_PLAY_VAULT_CONTRACT_ADDRESS.try_into().unwrap();
-            
+            let vault_address: ContractAddress = STRK_PLAY_VAULT_CONTRACT_ADDRESS
+                .try_into()
+                .unwrap();
+
             // 2. Validate user has sufficient token balance
             let user_balance = token_dispatcher.balance_of(user);
             assert(user_balance > 0, 'No token balance');
             assert(user_balance >= ticket_price, 'Insufficient balance');
-            
+
             // 3. Validate user has approved lottery contract for token transfer
             let allowance = token_dispatcher.allowance(user, get_contract_address());
             assert(allowance >= ticket_price, 'Insufficient allowance');
-            
+
             // 4. Execute token transfer from user to vault
-            let transfer_success = token_dispatcher.transfer_from(user, vault_address, ticket_price);
+            let transfer_success = token_dispatcher
+                .transfer_from(user, vault_address, ticket_price);
             assert(transfer_success, 'Transfer failed');
             // --- End balance validation and deduction logic ---
 
@@ -316,7 +345,7 @@ mod Lottery {
                         timestamp: current_timestamp,
                     },
                 );
-            
+
             // Release reentrancy guard
             self.reentrancy_guard.write(false);
         }
@@ -455,7 +484,6 @@ mod Lottery {
         fn CreateNewDraw(ref self: ContractState, accumulatedPrize: u256) {
             // Validate that the accumulated prize is not negative
             assert(accumulatedPrize >= 0, 'Invalid accumulated prize');
-            
 
             let drawId = self.currentDrawId.read() + 1;
             let previousAmount = self.accumulatedPrize.read();
