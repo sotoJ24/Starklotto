@@ -67,10 +67,6 @@ pub trait ILottery<TContractState> {
         number5: u16,
     ) -> u8;
     fn CreateNewDraw(ref self: TContractState, accumulatedPrize: u256);
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
     fn SetTicketPrice(ref self: TContractState, price: u256);
     fn GetTicketPrice(self: @TContractState) -> u256;
     //=======================================================================================
@@ -709,7 +705,6 @@ pub mod Lottery {
         fn GetJackpotEntryIsCompleted(self: @ContractState, drawId: u64) -> bool {
             let draw = self.draws.entry(drawId).read();
             !draw.isActive
-        }
         }
     }
 
