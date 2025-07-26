@@ -1,5 +1,8 @@
+use contracts::StarkPlayERC20::{IBurnableDispatcher, IBurnableDispatcherTrait, IMintableDispatcher, IMintableDispatcherTrait, IPrizeTokenDispatcher,IPrizeTokenDispatcherTrait};
+use contracts::StarkPlayVault::StarkPlayVault::FELT_STRK_CONTRACT;
 use contracts::StarkPlayVault::{IStarkPlayVaultDispatcher, IStarkPlayVaultDispatcherTrait};
 use openzeppelin_testing::declare_and_deploy;
+use openzeppelin_token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use openzeppelin_utils::serde::SerializedAppend;
 use snforge_std::{
     CheatSpan, cheat_caller_address, EventSpy, start_cheat_caller_address,
@@ -7,10 +10,12 @@ use snforge_std::{
     EventSpyAssertionsTrait, EventSpyTrait, // Add for fetching events directly
     Event, // A structure describing a raw `Event`
     IsEmitted // Trait for checking if a given event was ever emitted
+   
 };
 use starknet::ContractAddress;
+use starknet::contract_address::contract_address_const;
 
-
+const STRK_TOKEN_CONTRACT_ADDRESS: ContractAddress = FELT_STRK_CONTRACT.try_into().unwrap();
 // Direcciones de prueba
 const OWNER: ContractAddress = 0x02dA5254690b46B9C4059C25366D1778839BE63C142d899F0306fd5c312A5918
     .try_into()
@@ -24,20 +29,117 @@ const Initial_Fee_Percentage: u64 = 50; // 50 basis points = 0.5%
 const BASIS_POINTS_DENOMINATOR: u256 = 10000_u256; // 10000 basis points = 100%
 
 //helper function
-fn owner_address() -> ContractAddress {
+fn owner_address_Sepolia() -> ContractAddress {
     OWNER
+}
+fn user_address_Sepolia() -> ContractAddress {
+    USER
+}
+fn owner_address() -> ContractAddress {
+    contract_address_const::<0x123>()
 }
 
 fn user_address() -> ContractAddress {
-    USER
+    contract_address_const::<0x456>()
+}
+
+
+fn USER1() -> ContractAddress {
+     contract_address_const::<0x456>()
+}
+
+
+fn LARGE_AMOUNT() -> u256 {
+    1000000000000000000000000_u256 // 1 million tokens (within mint limit)
+}
+
+fn MAX_MINT_LIMIT() -> u256 {
+    // Definir el límite máximo exacto del contrato
+    1000000000000000000000000_u256 // 1 million tokens (MAX_MINT_AMOUNT)
+}
+
+fn EXCEEDS_MINT_LIMIT() -> u256 {
+    // Cantidad que excede el límite para provocar panic
+    2000000000000000000000000_u256 // 2 million tokens (exceeds limit)
+    
 }
 
 fn deploy_contract_lottery() -> ContractAddress {
     let contract_lotery: ContractAddress = OWNER.try_into().unwrap();
     contract_lotery
 }
+fn deploy_mock_strk_token() -> IMintableDispatcher {
+    // Deploy the mock STRK token at the exact constant address that the vault expects
+    let target_address: ContractAddress =
+        0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+        .try_into()
+        .unwrap();
 
-fn deploy_contract_starkplayvault() -> ContractAddress {
+    let contract = declare("StarkPlayERC20").unwrap().contract_class();
+    let constructor_calldata = array![owner_address().into(), owner_address().into()];
+
+    // Deploy at the specific constant address that the vault expects
+    let (deployed_address, _) = contract.deploy_at(@constructor_calldata, target_address).unwrap();
+
+    // Verify it deployed at the correct address
+    assert(deployed_address == target_address, 'Mock STRK address mismatch');
+
+    // Set up the STRK token with initial balances for users
+    let strk_token = IMintableDispatcher { contract_address: deployed_address };
+    start_cheat_caller_address(deployed_address, owner_address());
+
+    // Grant MINTER_ROLE to OWNER so we can mint tokens
+    strk_token.grant_minter_role(owner_address());
+    strk_token.set_minter_allowance(owner_address(), EXCEEDS_MINT_LIMIT().into()*10); // Large allowance
+
+    strk_token.mint(USER1(), EXCEEDS_MINT_LIMIT().into()*3); // Mint plenty for testing
+   
+    stop_cheat_caller_address(deployed_address);
+
+    strk_token
+}
+
+fn deploy_vault_contract() -> (IStarkPlayVaultDispatcher, IMintableDispatcher) {
+    let initial_fee = 50_u64; // 50 basis points = 0.5%
+    // First deploy the mock STRK token at the constant address
+    let _strk_token = deploy_mock_strk_token();
+
+    // Deploy StarkPlay token with OWNER as admin (so OWNER can grant roles)
+    let starkplay_contract = declare("StarkPlayERC20").unwrap().contract_class();
+    let starkplay_constructor_calldata = array![
+        owner_address().into(), owner_address().into(),
+    ]; // recipient and admin
+    let (starkplay_address, _) = starkplay_contract
+        .deploy(@starkplay_constructor_calldata)
+        .unwrap();
+    let starkplay_token = IMintableDispatcher { contract_address: starkplay_address };
+    let starkplay_token_burn = IBurnableDispatcher {contract_address: starkplay_address};
+
+    // Deploy vault (no longer needs STRK token address parameter)
+    let vault_contract = declare("StarkPlayVault").unwrap().contract_class();
+    let vault_constructor_calldata = array![
+        owner_address().into(), starkplay_token.contract_address.into(), initial_fee.into(),
+    ];
+    let (vault_address, _) = vault_contract.deploy(@vault_constructor_calldata).unwrap();
+    let vault = IStarkPlayVaultDispatcher { contract_address: vault_address };
+
+    // Grant MINTER_ROLE and BURNER_ROLE to the vault so it can mint and burn StarkPlay tokens
+    start_cheat_caller_address(starkplay_token.contract_address, owner_address());
+    starkplay_token.grant_minter_role(vault_address);
+    starkplay_token_burn.grant_burner_role(vault_address);
+    // Set a large allowance for the vault to mint and burn tokens
+    starkplay_token
+        .set_minter_allowance(vault_address, EXCEEDS_MINT_LIMIT().into()*10); // 1M tokens
+    starkplay_token_burn
+        .set_burner_allowance(vault_address, EXCEEDS_MINT_LIMIT().into()*10); // 1M tokens
+    stop_cheat_caller_address(starkplay_token.contract_address);
+
+    (vault, starkplay_token)
+}
+
+//this function is used to deploy the vault with the lottery contract
+//someone deleted the lottery contract from the vault constructor
+fn deploy_contract_starkplayvault_with_Lottery() -> ContractAddress {
     let contract_lotery = deploy_contract_lottery();
     let owner = owner_address();
     let initial_fee = 50_u64; // 50 basis points = 0.5%
@@ -74,9 +176,33 @@ fn get_fee_amount(feePercentage: u64, amount: u256) -> u256 {
     feeAmount
 }
 
+
+fn setup_user_balance(
+    token: IMintableDispatcher, user: ContractAddress, amount: u256, vault_address: ContractAddress,
+) {
+    // Mint STRK tokens to user so they can pay
+    // Set caller as owner (who has DEFAULT_ADMIN_ROLE and MINTER_ROLE)
+    start_cheat_caller_address(token.contract_address, owner_address());
+
+    // Ensure OWNER has MINTER_ROLE and allowance (should already be set, but just in case)
+    token.grant_minter_role(owner_address());
+    token.set_minter_allowance(owner_address(), EXCEEDS_MINT_LIMIT().into()*10);
+
+    // Mint tokens to user (still as owner)
+    token.mint(user, amount);
+    stop_cheat_caller_address(token.contract_address);
+
+    // Set up allowance so vault can transfer STRK tokens from user
+    let erc20_dispatcher = IERC20Dispatcher { contract_address: token.contract_address };
+    start_cheat_caller_address(token.contract_address, user);
+    erc20_dispatcher.approve(vault_address, amount);
+    stop_cheat_caller_address(token.contract_address);
+}
+
+
 #[test]
 fn test_get_fee_percentage_deploy() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
 
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
 
@@ -88,7 +214,7 @@ fn test_get_fee_percentage_deploy() {
 
 #[test]
 fn test_calculate_fee_buy_numbers() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
 
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
 
@@ -120,7 +246,7 @@ fn test_calculate_fee_buy_numbers() {
 #[should_panic(expected: 'Fee percentage is too low')]
 #[test]
 fn test_set_fee_zero_like_negative_value() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
     let new_fee = 0_u64;
     let result = vault_dispatcher.setFeePercentage(new_fee);
@@ -130,7 +256,7 @@ fn test_set_fee_zero_like_negative_value() {
 #[should_panic(expected: 'Fee percentage is too high')]
 #[test]
 fn test_set_fee_max_like_501() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
     let new_fee = 501_u64;
     let _result = vault_dispatcher.setFeePercentage(new_fee);
@@ -138,7 +264,7 @@ fn test_set_fee_max_like_501() {
 
 #[test]
 fn test_set_fee_deploy_contract() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
     let fee_percentage = 50_u64;
     let val = vault_dispatcher.GetFeePercentage();
@@ -147,7 +273,7 @@ fn test_set_fee_deploy_contract() {
 
 #[test]
 fn test_set_fee_min() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
     let new_fee = 10_u64;
     let result = vault_dispatcher.setFeePercentage(new_fee);
@@ -157,7 +283,7 @@ fn test_set_fee_min() {
 
 #[test]
 fn test_set_fee_max() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
     let new_fee = 500_u64;
     let result = vault_dispatcher.setFeePercentage(new_fee);
@@ -167,7 +293,7 @@ fn test_set_fee_max() {
 
 #[test]
 fn test_set_fee_middle() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
     let new_fee = 250_u64;
     let result = vault_dispatcher.setFeePercentage(new_fee);
@@ -177,7 +303,7 @@ fn test_set_fee_middle() {
 
 #[test]
 fn test_event_set_fee_percentage() {
-    let vault_address = deploy_contract_starkplayvault();
+    let vault_address = deploy_contract_starkplayvault_with_Lottery();
     let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
     let new_fee = 250_u64;
     let mut spy = spy_events();
@@ -511,4 +637,118 @@ fn test_mixed_amounts_accumulation() {
     }
 
     assert!(running_total == total_accumulated, "Running total should match total accumulated");
+}
+
+
+
+//Test for ISSUE-TEST-CU01-003
+
+// ============================================================================================
+// CRITICAL SECURITY TESTS - OVERFLOW/UNDERFLOW PREVENTION
+// ============================================================================================
+
+#[test]
+//#[fork("SEPOLIA_LATEST")]
+fn test_fee_calculation_overflow_prevention() {
+      
+  // Set up STRK balance for the user to test with large amounts
+  let user_address = USER1();
+
+   // Deploy vault
+   let (vault, _) = deploy_vault_contract();
+   let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault.contract_address };
+    
+    // Set up amounts for testing overflow prevention (within mint limit)
+    let large_amount = LARGE_AMOUNT(); // 1 million tokens
+    let very_large_amount = MAX_MINT_LIMIT(); // Exact limit - 1 million tokens
+
+    //---------------------------------------
+    // let erc20_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT_ADDRESS };
+    //let amount_to_transfer: u256 = very_large_amount;
+    //cheat_caller_address(STRK_TOKEN_CONTRACT_ADDRESS, user_address, CheatSpan::TargetCalls(1));
+    //erc20_dispatcher.approve(vault_address, amount_to_transfer);
+    //let approved_amount = erc20_dispatcher.allowance(user_address, vault_address);
+    //assert(approved_amount == amount_to_transfer, 'Not the right amount approved');
+    //---------------------------------------
+
+    // Get the deployed STRK token for user balance setup
+    let strk_token = IMintableDispatcher {
+        contract_address: 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+           .try_into()
+            .unwrap(),
+    };
+
+    // Setup user balance using the deployed STRK token
+    setup_user_balance(strk_token, user_address, MAX_MINT_LIMIT()*3, vault.contract_address);
+    
+    // Get initial state
+    let initial_fee_percentage = vault_dispatcher.GetFeePercentage();
+    let initial_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    
+    // Verify initial state
+    assert(initial_fee_percentage > 0, 'fee percentage zero');
+    assert(initial_accumulated_fee == 0, 'initial fee not zero');
+    
+    // Test buySTRKP with large amounts to ensure no overflow
+   let result1 = vault_dispatcher.buySTRKP(user_address, large_amount);
+    
+    // Verify first transaction completed successfully
+    assert(result1 == true, 'first tx failed');
+    
+    // Check that fees were calculated correctly for large amounts
+    let fee_percentage = vault_dispatcher.GetFeePercentage();
+    let expected_fee = large_amount * fee_percentage.into() / 10000_u256;
+    let actual_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    
+    // Verify fee calculation didn't overflow
+    assert(actual_accumulated_fee > 0, 'fee not accumulated');
+    assert(actual_accumulated_fee == expected_fee, 'fee calc wrong');
+    
+    // Test with even larger amount
+    let result2 = vault_dispatcher.buySTRKP(user_address, large_amount.into());
+    
+    // Verify second transaction completed successfully
+    assert(result2 == true, 'second tx failed');
+    
+    // Verify final state after both transactions
+    let final_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    let expected_total_fee = expected_fee + (very_large_amount * fee_percentage.into() / 10000_u256);
+    
+    // Verify total accumulated fees are correct
+    assert(final_accumulated_fee == expected_total_fee, 'total fee wrong');
+    assert(final_accumulated_fee > actual_accumulated_fee, 'fee not increased');
+    
+    // Verify the contract is still functional after large operations
+    let final_fee_percentage = vault_dispatcher.GetFeePercentage();
+    assert(final_fee_percentage == initial_fee_percentage, 'fee percentage changed');
+
+   
+}
+
+
+#[should_panic(expected: 'Exceeds mint limit')]
+#[test]
+fn test_fee_calculation_overflow_prevention_exceeds_limit() {
+    let (vault, _) = deploy_vault_contract();
+   let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault.contract_address };
+  
+     // Set up STRK balance for the user to test with large amounts
+     let user_address = USER1();
+    
+     // Get the deployed STRK token for user balance setup
+     let strk_token = IMintableDispatcher {
+        contract_address: 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+           .try_into()
+            .unwrap(),
+    };
+
+    // Setup user balance using the deployed STRK token
+    setup_user_balance(strk_token, user_address, MAX_MINT_LIMIT()*3, vault.contract_address);
+    
+    // Test buySTRKP with amount that exceeds mint limit
+    // This should trigger a panic with "Exceeds mint limit"
+    let _result = vault_dispatcher.buySTRKP(user_address, EXCEEDS_MINT_LIMIT());
+    
+    // This line should never be reached due to panic
+    assert(false, 'Should have panicked');
 }
