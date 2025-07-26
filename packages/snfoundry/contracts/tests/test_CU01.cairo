@@ -137,6 +137,44 @@ fn deploy_vault_contract() -> (IStarkPlayVaultDispatcher, IMintableDispatcher) {
     (vault, starkplay_token)
 }
 
+fn deploy_vault_contract_with_fee(initial_fee : u64) -> (IStarkPlayVaultDispatcher, IMintableDispatcher) {
+    //let initial_fee = 50_u64; // 50 basis points = 0.5%
+    // First deploy the mock STRK token at the constant address
+    let _strk_token = deploy_mock_strk_token();
+
+    // Deploy StarkPlay token with OWNER as admin (so OWNER can grant roles)
+    let starkplay_contract = declare("StarkPlayERC20").unwrap().contract_class();
+    let starkplay_constructor_calldata = array![
+        owner_address().into(), owner_address().into(),
+    ]; // recipient and admin
+    let (starkplay_address, _) = starkplay_contract
+        .deploy(@starkplay_constructor_calldata)
+        .unwrap();
+    let starkplay_token = IMintableDispatcher { contract_address: starkplay_address };
+    let starkplay_token_burn = IBurnableDispatcher {contract_address: starkplay_address};
+
+    // Deploy vault (no longer needs STRK token address parameter)
+    let vault_contract = declare("StarkPlayVault").unwrap().contract_class();
+    let vault_constructor_calldata = array![
+        owner_address().into(), starkplay_token.contract_address.into(), initial_fee.into(),
+    ];
+    let (vault_address, _) = vault_contract.deploy(@vault_constructor_calldata).unwrap();
+    let vault = IStarkPlayVaultDispatcher { contract_address: vault_address };
+
+    // Grant MINTER_ROLE and BURNER_ROLE to the vault so it can mint and burn StarkPlay tokens
+    start_cheat_caller_address(starkplay_token.contract_address, owner_address());
+    starkplay_token.grant_minter_role(vault_address);
+    starkplay_token_burn.grant_burner_role(vault_address);
+    // Set a large allowance for the vault to mint and burn tokens
+    starkplay_token
+        .set_minter_allowance(vault_address, EXCEEDS_MINT_LIMIT().into()*10); // 1M tokens
+    starkplay_token_burn
+        .set_burner_allowance(vault_address, EXCEEDS_MINT_LIMIT().into()*10); // 1M tokens
+    stop_cheat_caller_address(starkplay_token.contract_address);
+
+    (vault, starkplay_token)
+}
+
 //this function is used to deploy the vault with the lottery contract
 //someone deleted the lottery contract from the vault constructor
 fn deploy_contract_starkplayvault_with_Lottery() -> ContractAddress {
@@ -751,4 +789,230 @@ fn test_fee_calculation_overflow_prevention_exceeds_limit() {
     
     // This line should never be reached due to panic
     assert(false, 'Should have panicked');
+}
+
+#[test]
+fn test_fee_calculation_underflow_prevention() {
+    // Set up STRK balance for the user to test with large amounts
+    let user_address = USER1();
+
+    // Deploy vault
+    let (vault, _) = deploy_vault_contract_with_fee(10_u64);
+    let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault.contract_address };
+    
+    // Get the deployed STRK token for user balance setup
+    let strk_token = IMintableDispatcher {
+        contract_address: 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+           .try_into()
+            .unwrap(),
+    };
+
+    // Setup user balance using the deployed STRK token
+    setup_user_balance(strk_token, user_address, MAX_MINT_LIMIT()*3, vault.contract_address);
+    
+    // Get initial state
+    let initial_fee_percentage = vault_dispatcher.GetFeePercentage();
+    let initial_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    
+    // Verify initial state
+    assert(initial_fee_percentage > 0, 'fee percentage zero');
+    assert(initial_accumulated_fee == 0, 'initial fee not zero');
+    
+    // Test with very small amounts to prevent underflow
+    let fee_percentage = 10_u64; // 0.1% fee (minimum allowed)
+    
+    // Test with 1 wei (smallest possible amount)
+    let one_wei = 1_u256;
+    let fee_for_one_wei = get_fee_amount(fee_percentage, one_wei);
+    
+    // With 0.1% fee on 1 wei: 1 * 10 / 10000 = 0 (rounded down)
+    assert(fee_for_one_wei == 0_u256, 'should be 0 with 0.1% fee');
+    
+    // Test with 10 wei
+    let ten_wei = 10_u256;
+    let fee_for_ten_wei = get_fee_amount(fee_percentage, ten_wei);
+    
+    // With 0.1% fee on 10 wei: 10 * 10 / 10000 = 0 (rounded down)
+    assert(fee_for_ten_wei == 0_u256, 'should be 0 with 0.1% fee');
+    
+    // Test with 100 wei
+    let hundred_wei = 100_u256;
+    let fee_for_hundred_wei = get_fee_amount(fee_percentage, hundred_wei);
+    
+    // With 0.1% fee on 100 wei: 100 * 10 / 10000 = 0 (rounded down)
+    assert(fee_for_hundred_wei == 0_u256, 'should be 0 with 0.1% fee');
+    
+    // Test with 1000 wei (should generate a fee)
+    let thousand_wei = 1000_u256;
+    let fee_for_thousand_wei = get_fee_amount(fee_percentage, thousand_wei);
+    
+    // With 0.1% fee on 1000 wei: 1000 * 10 / 10000 = 1
+    assert(fee_for_thousand_wei == 1_u256, 'should be 1 with 0.1% fee');
+    
+    // Verify that division doesn't cause underflow
+    let minimum_amount_for_fee = 1000_u256;
+    let fee_for_minimum = get_fee_amount(fee_percentage, minimum_amount_for_fee);
+    assert(fee_for_minimum > 0, 'should generate a fee');
+    
+    // Test buySTRKP with small amounts to ensure no underflow
+    let result1 = vault_dispatcher.buySTRKP(user_address, thousand_wei);
+    
+    // Verify first transaction completed successfully
+    assert(result1 == true, 'first tx failed');
+    
+    // Check that fees were calculated correctly for small amounts
+    let actual_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    
+    // Verify fee calculation didn't underflow
+    assert(actual_accumulated_fee > 0, 'fee not accumulated');
+    assert(actual_accumulated_fee == fee_for_thousand_wei, 'fee calc wrong');
+    
+    // Test with another small amount
+    let result2 = vault_dispatcher.buySTRKP(user_address, thousand_wei);
+    
+    // Verify second transaction completed successfully
+    assert(result2 == true, 'second tx failed');
+    
+    // Verify final state after both transactions
+    let final_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    let expected_total_fee = fee_for_thousand_wei + fee_for_thousand_wei;
+    
+    // Verify total accumulated fees are correct
+    assert(final_accumulated_fee == expected_total_fee, 'total fee wrong');
+    assert(final_accumulated_fee > actual_accumulated_fee, 'fee not increased');
+    
+    // Verify the contract is still functional after small operations
+    let final_fee_percentage = vault_dispatcher.GetFeePercentage();
+    assert(final_fee_percentage == initial_fee_percentage, 'fee percentage changed');
+}
+
+
+
+#[test]
+fn test_decimal_precision_edge_cases() {
+    // Set up STRK balance for the user to test with large amounts
+    let user_address = USER1();
+
+    // Deploy vault
+    let (vault, _) = deploy_vault_contract();
+    let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault.contract_address };
+    
+    // Get the deployed STRK token for user balance setup
+    let strk_token = IMintableDispatcher {
+        contract_address: 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+           .try_into()
+            .unwrap(),
+    };
+
+    // Setup user balance using the deployed STRK token
+    setup_user_balance(strk_token, user_address, MAX_MINT_LIMIT()*3, vault.contract_address);
+    
+    // Get initial state
+    let initial_fee_percentage = vault_dispatcher.GetFeePercentage();
+    let initial_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    
+    // Verify initial state
+    assert(initial_fee_percentage > 0, 'fee percentage zero');
+    assert(initial_accumulated_fee == 0, 'initial fee not zero');
+    
+    // Test decimal precision with edge cases that could cause precision loss
+    let fee_percentage = 50_u64; // 0.5% fee
+    
+    // Test with amount that results in 0.5 wei fee (edge case)
+    // To get 0.5 wei fee: amount * 50 / 10000 = 0.5
+    // This means: amount = 0.5 * 10000 / 50 = 100 wei
+    let amount_for_half_wei = 100_u256;
+    let fee_for_half_wei = get_fee_amount(fee_percentage, amount_for_half_wei);
+    
+    // Should round down to 0 wei
+    assert(fee_for_half_wei == 0_u256, 'should round down for 0.5');
+    
+    // Test with amount that results in 1.5 wei fee
+    // To get 1.5 wei fee: amount * 50 / 10000 = 1.5
+    // This means: amount = 1.5 * 10000 / 50 = 300 wei
+    let amount_for_one_and_half_wei = 300_u256;
+    let fee_for_one_and_half_wei = get_fee_amount(fee_percentage, amount_for_one_and_half_wei);
+    
+    // Should round down to 1 wei
+    assert(fee_for_one_and_half_wei == 1_u256, 'should round down for 1.5');
+    
+    // Test with amount that results in exactly 1 wei fee
+    // To get exactly 1 wei fee: amount * 50 / 10000 = 1
+    // This means: amount = 1 * 10000 / 50 = 200 wei
+    let amount_for_exact_one_wei = 200_u256;
+    let fee_for_exact_one_wei = get_fee_amount(fee_percentage, amount_for_exact_one_wei);
+    
+    // Should be exactly 1 wei
+    assert(fee_for_exact_one_wei == 1_u256, 'should be exactly 1n');
+    
+    // Test with very small amounts that should result in zero fee
+    let very_small_amounts = array![
+        1_u256,   // 1 wei
+        10_u256,  // 10 wei
+        50_u256,  // 50 wei
+        99_u256   // 99 wei
+    ];
+    
+    let mut i = 0;
+    while i < very_small_amounts.len() {
+        let amount = *very_small_amounts.at(i);
+        let fee = get_fee_amount(fee_percentage, amount);
+        assert(fee == 0_u256, 'should be zero fee');
+        i += 1;
+    }
+    
+    // Test with amounts that should result in non-zero fees
+    let amounts_with_fees = array![
+        200_u256,  // Should give 1 wei fee
+        400_u256,  // Should give 2 wei fee
+        600_u256,  // Should give 3 wei fee
+        1000_u256  // Should give 5 wei fee
+    ];
+    
+    let expected_fees = array![
+        1_u256,  // For 200 wei
+        2_u256,  // For 400 wei
+        3_u256,  // For 600 wei
+        5_u256   // For 1000 wei
+    ];
+    
+    let mut j = 0;
+    while j < amounts_with_fees.len() {
+        let amount = *amounts_with_fees.at(j);
+        let expected_fee = *expected_fees.at(j);
+        let calculated_fee = get_fee_amount(fee_percentage, amount);
+        assert(calculated_fee == expected_fee, 'should be precise');
+        j += 1;
+    }
+    
+    // Test buySTRKP with edge case amounts to ensure precision is maintained
+    let result1 = vault_dispatcher.buySTRKP(user_address, amount_for_exact_one_wei);
+    
+    // Verify first transaction completed successfully
+    assert(result1 == true, 'first tx failed');
+    
+    // Check that fees were calculated correctly for edge case amounts
+    let actual_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    
+    // Verify fee calculation maintained precision
+    assert(actual_accumulated_fee > 0, 'fee not accumulated');
+    assert(actual_accumulated_fee == fee_for_exact_one_wei, 'fee calc wrong');
+    
+    // Test with another edge case amount
+    let result2 = vault_dispatcher.buySTRKP(user_address, amount_for_one_and_half_wei);
+    
+    // Verify second transaction completed successfully
+    assert(result2 == true, 'second tx failed');
+    
+    // Verify final state after both transactions
+    let final_accumulated_fee = vault_dispatcher.get_accumulated_fee();
+    let expected_total_fee = fee_for_exact_one_wei + fee_for_one_and_half_wei;
+    
+    // Verify total accumulated fees are correct
+    assert(final_accumulated_fee == expected_total_fee, 'total fee wrong');
+    assert(final_accumulated_fee > actual_accumulated_fee, 'fee not increased');
+    
+    // Verify the contract is still functional after edge case operations
+    let final_fee_percentage = vault_dispatcher.GetFeePercentage();
+    assert(final_fee_percentage == initial_fee_percentage, 'fee percentage changed');
 }
