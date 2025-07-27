@@ -512,3 +512,42 @@ fn test_mixed_amounts_accumulation() {
 
     assert!(running_total == total_accumulated, "Running total should match total accumulated");
 }
+
+//--------------TEST ISSUE-VAULT-HACK14-001------------------------------
+
+//test set fee percentage prizes converted
+#[test]
+fn test_set_fee_percentage_prizes_converted() {
+    let token_address = deploy_starkplay_token();
+    let vault_address = deploy_vault_with_fee(token_address, 500_u64);
+    let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
+
+    //test set fee percentage prizes converted
+    let new_fee = 500_u64;
+    let result = vault_dispatcher.setFeePercentagePrizesConverted(new_fee);
+    assert!(result, "Set fee should return true");
+
+    //test get fee percentage prizes converted
+    let fee_percentage = vault_dispatcher.GetFeePercentagePrizesConverted();
+    assert!(fee_percentage == new_fee, "Fee percentage  should be 5%");
+}
+#[should_panic(expected: 'Fee percentage is too high')]
+#[test]
+fn test_set_fee_percentage_prizes_converted_invalid_fee() {
+    let token_address = deploy_starkplay_token();
+    let vault_address = deploy_vault_with_fee(token_address, 500_u64);
+    let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
+    //test set fee percentage prizes converted with invalid fee
+    let new_fee = 501_u64;
+    let result = vault_dispatcher.setFeePercentagePrizesConverted(new_fee);
+    assert!(!result, "Set fee should return false");
+}
+#[test]
+fn test_get_fee_percentage_prizes_in_constructor() {
+    let token_address = deploy_starkplay_token();
+    let vault_address = deploy_vault_with_fee(token_address, 500_u64);
+    let vault_dispatcher = IStarkPlayVaultDispatcher { contract_address: vault_address };
+    //test get fee percentage prizes in constructor
+    let fee_percentage = vault_dispatcher.GetFeePercentagePrizesConverted();
+    assert!(fee_percentage == 300_u64, "Fee percentage should be 3%");
+}

@@ -5,6 +5,7 @@ pub trait IStarkPlayVault<TContractState> {
     //=======================================================================================
     //get functions
     fn GetFeePercentage(self: @TContractState) -> u64;
+    fn GetFeePercentagePrizesConverted(self: @TContractState) -> u64;
     fn GetAccumulatedPrizeConversionFees(self: @TContractState) -> u256;
     fn get_mint_limit(self: @TContractState) -> u256;
     fn get_burn_limit(self: @TContractState) -> u256;
@@ -17,6 +18,7 @@ pub trait IStarkPlayVault<TContractState> {
     fn setMintLimit(ref self: TContractState, new_limit: u256);
     fn setBurnLimit(ref self: TContractState, new_limit: u256);
     fn setFeePercentage(ref self: TContractState, new_fee: u64) -> bool;
+    fn setFeePercentagePrizesConverted(ref self: TContractState, new_fee: u64) -> bool;
     fn convert_to_strk(ref self: TContractState, amount: u256);
     //=======================================================================================
     //mint functions
@@ -87,9 +89,12 @@ pub mod StarkPlayVault {
         starkPlayToken: ContractAddress,
         //fee percentage for the vault to mint STRKP
         feePercentage: u64,
+        feePercentagePrizesConverted: u64,
         //this don't change after the constructor
         feePercentageMin: u64, //min fee percentage for the vault to mint STRKP (0.1% = 10 basis points)
         feePercentageMax: u64, //max fee percentage for the vault to mint STRKP (5% = 500 basis points)
+        feePercentagePrizesConvertedMin: u64, //min fee percentage for the vault to convert prizes to STRKP (0.1% = 10 basis points)
+        feePercentagePrizesConvertedMax: u64, //max fee percentage for the vault to convert prizes to STRKP (5% = 500 basis points)
         //------------------------------------------------
         //owner of the vault
         owner: ContractAddress,
@@ -127,6 +132,9 @@ pub mod StarkPlayVault {
         self.feePercentage.write(feePercentage);
         self.feePercentageMin.write(10); //0.1%
         self.feePercentageMax.write(500); //5%
+        self.feePercentagePrizesConverted.write(300); //3%
+        self.feePercentagePrizesConvertedMin.write(10); //0.1%
+        self.feePercentagePrizesConvertedMax.write(500); //5%
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -221,6 +229,14 @@ pub mod StarkPlayVault {
         old_fee: u64,
         new_fee: u64,
     }
+
+    #[derive(Drop, starknet::Event)]
+    struct SetFeePercentagePrizesConverted {
+        #[key]
+        owner: ContractAddress,
+        old_fee: u64,
+        new_fee: u64,
+    }
     #[derive(Drop, starknet::Event)]
     pub struct FeeUpdated {
         #[key]
@@ -262,6 +278,7 @@ pub mod StarkPlayVault {
         MintLimitUpdated: MintLimitUpdated,
         BurnLimitUpdated: BurnLimitUpdated,
         SetFeePercentage: SetFeePercentage,
+        SetFeePercentagePrizesConverted: SetFeePercentagePrizesConverted,
         FeeUpdated: FeeUpdated,
         GeneralFeesWithdrawn: GeneralFeesWithdrawn,
         PrizeConversionFeesWithdrawn: PrizeConversionFeesWithdrawn,
@@ -491,6 +508,10 @@ pub mod StarkPlayVault {
             self.feePercentage.read()
         }
 
+        fn GetFeePercentagePrizesConverted(self: @ContractState) -> u64 {
+            self.feePercentagePrizesConverted.read()
+        }
+
         fn GetAccumulatedPrizeConversionFees(self: @ContractState) -> u256 {
             self.accumulatedPrizeConversionFees.read()
         }
@@ -526,6 +547,15 @@ pub mod StarkPlayVault {
             true
         }
 
+        fn setFeePercentagePrizesConverted(ref self: ContractState, new_fee: u64) -> bool {
+            assert_only_owner(@self);
+            assert(new_fee >= self.feePercentagePrizesConvertedMin.read(), 'Fee percentage is too low');
+            assert(new_fee <= self.feePercentagePrizesConvertedMax.read(), 'Fee percentage is too high');
+            let old_fee = self.feePercentagePrizesConverted.read();
+            self.feePercentagePrizesConverted.write(new_fee);
+            self.emit(SetFeePercentagePrizesConverted { owner: get_caller_address(), old_fee, new_fee });
+            true
+        }
         fn get_mint_limit(self: @ContractState) -> u256 {
             self.mintLimit.read()
         }
