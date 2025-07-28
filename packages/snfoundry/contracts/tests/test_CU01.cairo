@@ -715,7 +715,7 @@ fn test_get_fee_percentage_prizes_in_constructor() {
     //test get fee percentage prizes in constructor
     let fee_percentage = vault_dispatcher.GetFeePercentagePrizesConverted();
     assert!(fee_percentage == 300_u64, "Fee percentage should be 3%");
-=======
+
 
 
 //Test for ISSUE-TEST-CU01-003
