@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { LOTTERY_MIN_NUMBER, LOTTERY_MAX_NUMBER } from "../utils/lotteryConstants";
 
 interface NumberSelectorProps {
-  maxNumbers: number;
+  maxNumbers?: number;
   maxSelections: number;
   onSelectNumbers: (numbers: number[]) => void;
 }
 
 export function NumberSelector({
-  maxNumbers,
+  maxNumbers = LOTTERY_MAX_NUMBER,
   maxSelections,
   onSelectNumbers,
 }: NumberSelectorProps) {
@@ -34,7 +35,7 @@ export function NumberSelector({
 
   return (
     <div className="grid grid-cols-5 gap-2">
-      {Array.from({ length: maxNumbers }, (_, i) => i + 1).map((number) => (
+      {Array.from({ length: maxNumbers }, (_, i) => i + LOTTERY_MIN_NUMBER).map((number) => (
         <motion.button
           key={number}
           onClick={() => handleNumberClick(number)}

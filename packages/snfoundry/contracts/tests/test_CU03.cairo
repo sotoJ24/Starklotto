@@ -54,7 +54,8 @@ fn validate_ticket_numbers() {
     
     let mut i = 0;
     while i < 5 {
-        assert(*ticket.at(i) <= 40_u16, 'Number within range');
+        assert(*ticket.at(i) >= 1_u16, 'Number >= minimum');
+        assert(*ticket.at(i) <= 40_u16, 'Number <= maximum');
         i += 1;
     }
     
@@ -83,12 +84,12 @@ fn test_multiple_tickets() {
     assert(ticket2.len() == 5, 'Second ticket valid');
     assert(ticket3.len() == 5, 'Third ticket valid');
     
-    let min_values = array![0_u16, 1_u16, 2_u16, 3_u16, 4_u16];
+    let min_values = array![1_u16, 2_u16, 3_u16, 4_u16, 5_u16];
     let max_values = array![36_u16, 37_u16, 38_u16, 39_u16, 40_u16];
     
     assert(min_values.len() == 5, 'Minimum values');
     assert(max_values.len() == 5, 'Maximum values');
-    assert(*min_values.at(0) == 0_u16, 'Minimum boundary');
+    assert(*min_values.at(0) == 1_u16, 'Minimum boundary');
     assert(*max_values.at(4) == 40_u16, 'Maximum boundary');
 }
 
@@ -113,8 +114,10 @@ fn test_invalid_inputs() {
     }
     assert(found_duplicate, 'Finds duplicate numbers');
     
-    let invalid_range = array![5_u16, 10_u16, 15_u16, 20_u16, 45_u16];
-    assert(*invalid_range.at(4) > 40_u16, 'Identifies out of range');
+    let invalid_range_high = array![5_u16, 10_u16, 15_u16, 20_u16, 45_u16];
+    let invalid_range_low = array![0_u16, 10_u16, 15_u16, 20_u16, 25_u16];
+    assert(*invalid_range_high.at(4) > 40_u16, 'Identifies out of range (high)');
+    assert(*invalid_range_low.at(0) < 1_u16, 'Identifies out of range (low)');
     
     let short_array = array![1_u16, 2_u16, 3_u16, 4_u16];
     let long_array = array![1_u16, 2_u16, 3_u16, 4_u16, 5_u16, 6_u16];
@@ -195,4 +198,34 @@ fn test_payment_handling() {
     let ticket_quantity = 3_u32;
     let expected_total = 3000000000000000000_u256;
     assert(price_per_ticket * ticket_quantity.into() == expected_total, 'Total cost calculation');
+}
+
+#[test]
+fn test_validate_numbers_range() {
+    let _lottery = setup_lottery();
+    
+    // Test valid numbers in range 1-40
+    let valid_numbers = array![1_u16, 20_u16, 40_u16, 15_u16, 30_u16];
+    assert(valid_numbers.len() == 5, 'Valid length');
+    
+    // Test boundary values
+    let boundary_numbers = array![1_u16, 2_u16, 39_u16, 40_u16, 25_u16];
+    assert(boundary_numbers.len() == 5, 'Boundary length');
+    assert(*boundary_numbers.at(0) == 1_u16, 'Minimum boundary');
+    assert(*boundary_numbers.at(3) == 40_u16, 'Maximum boundary');
+    
+    // Test invalid numbers below minimum
+    let invalid_low = array![0_u16, 10_u16, 20_u16, 30_u16, 40_u16];
+    assert(*invalid_low.at(0) < 1_u16, 'Below minimum');
+    
+    // Test invalid numbers above maximum
+    let invalid_high = array![1_u16, 10_u16, 20_u16, 30_u16, 41_u16];
+    assert(*invalid_high.at(4) > 40_u16, 'Above maximum');
+    
+    // Test edge cases
+    let edge_case_min = array![1_u16, 1_u16, 1_u16, 1_u16, 1_u16];
+    let edge_case_max = array![40_u16, 40_u16, 40_u16, 40_u16, 40_u16];
+    
+    assert(*edge_case_min.at(0) == 1_u16, 'Edge case minimum');
+    assert(*edge_case_max.at(0) == 40_u16, 'Edge case maximum');
 }

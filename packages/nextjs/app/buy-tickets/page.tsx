@@ -81,7 +81,7 @@ export default function BuyTicketsPage() {
   const generateRandom = (ticketId: number) => {
     const numbers = new Set<number>();
     while (numbers.size < 5) {
-      numbers.add(Math.floor(Math.random() * 41));
+      numbers.add(Math.floor(Math.random() * 40) + 1);
     }
     setSelectedNumbers((current) => ({
       ...current,
@@ -94,7 +94,7 @@ export default function BuyTicketsPage() {
     for (let i = 1; i <= ticketCount; i++) {
       const numbers = new Set<number>();
       while (numbers.size < 5) {
-        numbers.add(Math.floor(Math.random() * 41));
+        numbers.add(Math.floor(Math.random() * 40) + 1);
       }
       newSelections[i] = Array.from(numbers);
     }
