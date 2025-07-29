@@ -11,6 +11,7 @@ pub trait IStarkPlayVault<TContractState> {
     fn get_burn_limit(self: @TContractState) -> u256;
     fn get_accumulated_fee(self: @TContractState) -> u256;
     fn get_owner(self: @TContractState) -> ContractAddress;
+    fn get_total_starkplay_minted(self: @TContractState) -> u256;
 
     //=======================================================================================
     //set functions
@@ -62,7 +63,7 @@ pub mod StarkPlayVault {
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
-     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //Constants Dev
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -493,14 +494,6 @@ pub mod StarkPlayVault {
 
     //}
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    //fn  getTotalStarkPlayMinted(): u64{
-
-    //}
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
     //fn  getTotalStarkPlayBurned(): u64{
 
     //}
@@ -644,5 +637,12 @@ pub mod StarkPlayVault {
             self.emit(PrizeConversionFeesWithdrawn { recipient, amount });
             true
         }
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+        fn get_total_starkplay_minted(self: @ContractState) -> u256 {
+            self.totalStarkPlayMinted.read()
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     }
 }
