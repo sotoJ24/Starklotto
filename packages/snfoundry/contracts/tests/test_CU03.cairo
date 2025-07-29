@@ -1,5 +1,6 @@
 //Test for ISSUE-TEST-CU01-003
 
+use contracts::Lottery::{ILotteryDispatcher, ILotteryDispatcherTrait};
 use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address};
 use starknet::{ContractAddress, contract_address_const};
@@ -202,7 +203,8 @@ fn test_payment_handling() {
 
 #[test]
 fn test_buy_ticket_valid_numbers() {
-    let _lottery = setup_lottery();
+    let lottery_address = setup_lottery();
+    let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
     
     // Test valid numbers in range 1-40
     let valid_numbers = array![1_u16, 20_u16, 40_u16, 15_u16, 30_u16];
@@ -214,21 +216,23 @@ fn test_buy_ticket_valid_numbers() {
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_number_zero() {
-    let _lottery = setup_lottery();
+    let lottery_address = setup_lottery();
+    let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
     
     let invalid_numbers = array![0_u16, 10_u16, 20_u16, 30_u16, 40_u16];
     
-    assert(*invalid_numbers.at(0) == 0_u16, 'Number is zero');
-    assert(*invalid_numbers.at(0) < 1_u16, 'Number below minimum');
+    // This should panic because 0 is below the minimum (1)
+    lottery_dispatcher.BuyTicket(1_u64, invalid_numbers);
 }
 
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_number_above_max() {
-    let _lottery = setup_lottery();
+    let lottery_address = setup_lottery();
+    let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
     
     let invalid_numbers = array![1_u16, 10_u16, 20_u16, 30_u16, 41_u16];
     
-    assert(*invalid_numbers.at(4) == 41_u16, 'Number is 41');
-    assert(*invalid_numbers.at(4) > 40_u16, 'Number above maximum');
+    // This should panic because 41 is above the maximum (40)
+    lottery_dispatcher.BuyTicket(1_u64, invalid_numbers);
 }
