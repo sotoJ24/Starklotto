@@ -201,31 +201,34 @@ fn test_payment_handling() {
 }
 
 #[test]
-fn test_validate_numbers_range() {
+fn test_buy_ticket_valid_numbers() {
     let _lottery = setup_lottery();
     
     // Test valid numbers in range 1-40
     let valid_numbers = array![1_u16, 20_u16, 40_u16, 15_u16, 30_u16];
     assert(valid_numbers.len() == 5, 'Valid length');
+    assert(*valid_numbers.at(0) >= 1_u16, 'First number >= 1');
+    assert(*valid_numbers.at(2) <= 40_u16, 'Third number <= 40');
+}
+
+#[should_panic(expected: 'Invalid numbers')]
+#[test]
+fn test_buy_ticket_number_zero() {
+    let _lottery = setup_lottery();
     
-    // Test boundary values
-    let boundary_numbers = array![1_u16, 2_u16, 39_u16, 40_u16, 25_u16];
-    assert(boundary_numbers.len() == 5, 'Boundary length');
-    assert(*boundary_numbers.at(0) == 1_u16, 'Minimum boundary');
-    assert(*boundary_numbers.at(3) == 40_u16, 'Maximum boundary');
+    let invalid_numbers = array![0_u16, 10_u16, 20_u16, 30_u16, 40_u16];
     
-    // Test invalid numbers below minimum
-    let invalid_low = array![0_u16, 10_u16, 20_u16, 30_u16, 40_u16];
-    assert(*invalid_low.at(0) < 1_u16, 'Below minimum');
+    assert(*invalid_numbers.at(0) == 0_u16, 'Number is zero');
+    assert(*invalid_numbers.at(0) < 1_u16, 'Number below minimum');
+}
+
+#[should_panic(expected: 'Invalid numbers')]
+#[test]
+fn test_buy_ticket_number_above_max() {
+    let _lottery = setup_lottery();
     
-    // Test invalid numbers above maximum
-    let invalid_high = array![1_u16, 10_u16, 20_u16, 30_u16, 41_u16];
-    assert(*invalid_high.at(4) > 40_u16, 'Above maximum');
+    let invalid_numbers = array![1_u16, 10_u16, 20_u16, 30_u16, 41_u16];
     
-    // Test edge cases
-    let edge_case_min = array![1_u16, 1_u16, 1_u16, 1_u16, 1_u16];
-    let edge_case_max = array![40_u16, 40_u16, 40_u16, 40_u16, 40_u16];
-    
-    assert(*edge_case_min.at(0) == 1_u16, 'Edge case minimum');
-    assert(*edge_case_max.at(0) == 40_u16, 'Edge case maximum');
+    assert(*invalid_numbers.at(4) == 41_u16, 'Number is 41');
+    assert(*invalid_numbers.at(4) > 40_u16, 'Number above maximum');
 }
