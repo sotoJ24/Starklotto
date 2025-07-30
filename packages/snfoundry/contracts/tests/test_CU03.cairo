@@ -201,16 +201,18 @@ fn test_payment_handling() {
     assert(price_per_ticket * ticket_quantity.into() == expected_total, 'Total cost calculation');
 }
 
+#[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_valid_numbers() {
     let lottery_address = setup_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
     
-    // Test valid numbers in range 1-40
-    let valid_numbers = array![1_u16, 20_u16, 40_u16, 15_u16, 30_u16];
-    assert(valid_numbers.len() == 5, 'Valid length');
-    assert(*valid_numbers.at(0) >= 1_u16, 'First number >= 1');
-    assert(*valid_numbers.at(2) <= 40_u16, 'Third number <= 40');
+    let invalid_numbers = array![0_u16, 20_u16, 40_u16, 15_u16, 30_u16];
+    assert(invalid_numbers.len() == 5, 'Valid length');
+    assert(*invalid_numbers.at(0) == 0_u16, 'First number is 0 (invalid)');
+    assert(*invalid_numbers.at(2) <= 40_u16, 'Third number <= 40');
+
+    lottery_dispatcher.BuyTicket(1_u64, invalid_numbers);
 }
 
 #[should_panic(expected: 'Invalid numbers')]
