@@ -131,7 +131,7 @@ export default function DrawDetails({ drawData }: DrawDetailsProps) {
                   {formatCurrency(drawData.rolloverAmount)}
                 </div>
                 <div className="text-yellow-300 text-sm">
-                  This amount will be added to the next draw's prize pool
+                  This amount will be added to the next draw&apos;s prize pool
                 </div>
               </div>
             </div>
