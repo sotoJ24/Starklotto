@@ -36,6 +36,10 @@ export default function TokenMint({
   const { value, formatted } = useScaffoldStrkBalance({
     address: address || "",
   });
+  
+
+
+  console.log(value)
   const strkBalance = Number(formatted) || 0;
 
   // Parámetros de minteo
