@@ -21,7 +21,7 @@ export default function TokenUnmint({
   useExternalNotifications = false,
 }: TokenUnmintProps) {
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(
-    25
+    25,
   );
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +39,7 @@ export default function TokenUnmint({
 
   const prizeBalance = Number(formatted) || 0;
 
-  console.log(value);
-
-  const unmintRate = 1; 
+  const unmintRate = 1;
   const feePercentage = 3;
 
   const percentageOptions = [25, 50, 75, 100];
@@ -60,11 +58,10 @@ export default function TokenUnmint({
     setError(null);
   };
 
-  
   const showToast = (
     title: string,
     message: string,
-    type: "success" | "error"
+    type: "success" | "error",
   ) => {
     if (!useExternalNotifications) {
       setToast({
@@ -131,7 +128,7 @@ export default function TokenUnmint({
             type={toast.type}
             onClose={() => setToast(null)}
           />,
-          document.body
+          document.body,
         )}
 
       <div className="bg-gray-900 text-white rounded-xl shadow-lg overflow-hidden border border-purple-500/20">

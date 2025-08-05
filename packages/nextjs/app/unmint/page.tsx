@@ -33,7 +33,8 @@ export default function UnmintPage() {
               Unmint STRKP Tokens
             </h1>
             <p className="max-w-2xl mx-auto text-gray-300 text-lg">
-              Convert your STRKP prize tokens back to STRK. Only tokens earned as lottery prizes are eligible for conversion.
+              Convert your STRKP prize tokens back to STRK. Only tokens earned
+              as lottery prizes are eligible for conversion.
             </p>
           </div>
 
@@ -64,21 +65,30 @@ export default function UnmintPage() {
                   How Unminting Works
                 </h3>
                 <div className="space-y-3 text-gray-300">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3 gap-x-5">
                     <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-purple-400 text-sm font-bold">1</span>
+                      <span className="text-purple-400 text-sm font-bold">
+                        1
+                      </span>
                     </div>
-                    <p>Select a percentage (25%, 50%, 75%, or 100%) of your convertible STRKP balance</p>
+                    <p>
+                      Select a percentage (25%, 50%, 75%, or 100%) of your
+                      convertible STRKP balance
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3 gap-x-5">
                     <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-purple-400 text-sm font-bold">2</span>
+                      <span className="text-purple-400 text-sm font-bold">
+                        2
+                      </span>
                     </div>
                     <p>A 3% fee is deducted from the conversion amount</p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3 gap-x-5">
                     <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-purple-400 text-sm font-bold">3</span>
+                      <span className="text-purple-400 text-sm font-bold">
+                        3
+                      </span>
                     </div>
                     <p>Receive STRK tokens at a 1:1 rate (minus fees)</p>
                   </div>
@@ -91,21 +101,33 @@ export default function UnmintPage() {
                   Important Notes
                 </h3>
                 <div className="space-y-3 text-gray-300">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0 mt-2"></div>
-                    <p><strong>Prize Tokens Only:</strong> Only STRKP tokens earned as lottery prizes can be unminted</p>
+                    <p>
+                      <strong>Prize Tokens Only:</strong> Only STRKP tokens
+                      earned as lottery prizes can be unminted
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3 gap-x-5">
                     <div className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0 mt-2"></div>
-                    <p><strong>Gameplay Tokens:</strong> STRKP tokens minted for gameplay are NOT convertible</p>
+                    <p>
+                      <strong>Gameplay Tokens:</strong> STRKP tokens minted for
+                      gameplay are NOT convertible
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3 gap-x-5">
                     <div className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0 mt-2"></div>
-                    <p><strong>Conversion Fee:</strong> A 3% fee applies to all unmint operations</p>
+                    <p>
+                      <strong>Conversion Fee:</strong> A 3% fee applies to all
+                      unmint operations
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3 gap-x-5">
                     <div className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0 mt-2"></div>
-                    <p><strong>Percentage Selection:</strong> Choose from predefined percentages - manual amounts are not allowed</p>
+                    <p>
+                      <strong>Percentage Selection:</strong> Choose from
+                      predefined percentages - manual amounts are not allowed
+                    </p>
                   </div>
                 </div>
               </div>
