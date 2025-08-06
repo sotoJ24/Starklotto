@@ -61,10 +61,37 @@ fn deploy_starkplay_vault(token_address: ContractAddress) -> ContractAddress {
     contract_address
 }
 
-fn deploy_lottery() -> ContractAddress {
+fn deploy_mock_strk_play() -> ContractAddress {
+    let contract_class = declare("StarkPlayERC20").unwrap().contract_class();
     let mut calldata = array![];
-    calldata.append_serde(owner_address());
-    declare_and_deploy("Lottery", calldata)
+    calldata.append_serde(owner_address()); // recipient
+    calldata.append_serde(owner_address()); // admin
+    let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+    contract_address
+}
+
+fn deploy_mock_vault(strk_play_address: ContractAddress) -> ContractAddress {
+    let contract_class = declare("StarkPlayVault").unwrap().contract_class();
+    let mut calldata = array![];
+    calldata.append_serde(owner_address()); // owner
+    calldata.append_serde(strk_play_address); // starkPlayToken
+    calldata.append_serde(50_u64); // feePercentage
+    let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+    contract_address
+}
+
+fn deploy_lottery() -> (ContractAddress, ContractAddress, ContractAddress) {
+    // Deploy mock contracts first
+    let mock_strk_play = deploy_mock_strk_play();
+    let mock_vault = deploy_mock_vault(mock_strk_play);
+
+    let mut calldata = array![];
+    calldata.append_serde(owner_address()); // owner
+    calldata.append_serde(mock_strk_play); // strkPlayContractAddress
+    calldata.append_serde(mock_vault); // strkPlayVaultContractAddress
+    let lottery_address = declare_and_deploy("Lottery", calldata);
+
+    (lottery_address, mock_strk_play, mock_vault)
 }
 
 fn create_valid_numbers() -> Array<u16> {
@@ -78,38 +105,42 @@ fn create_valid_numbers() -> Array<u16> {
 }
 
 fn setup_mocks_for_buy_ticket(
-    user: ContractAddress, user_balance: u256, allowance: u256, transfer_success: bool,
+    strk_play_address: ContractAddress,
+    user: ContractAddress,
+    user_balance: u256,
+    allowance: u256,
+    transfer_success: bool,
 ) {
     // Mock balance_of call
-    start_mock_call(STRK_PLAY_CONTRACT_ADDRESS, selector!("balance_of"), user_balance);
+    start_mock_call(strk_play_address, selector!("balance_of"), user_balance);
 
     // Mock allowance call
-    start_mock_call(STRK_PLAY_CONTRACT_ADDRESS, selector!("allowance"), allowance);
+    start_mock_call(strk_play_address, selector!("allowance"), allowance);
 
     // Mock transfer_from call
-    start_mock_call(STRK_PLAY_CONTRACT_ADDRESS, selector!("transfer_from"), transfer_success);
+    start_mock_call(strk_play_address, selector!("transfer_from"), transfer_success);
 }
 
-fn setup_mocks_success(user: ContractAddress) {
-    setup_mocks_for_buy_ticket(user, TICKET_PRICE * 10, TICKET_PRICE * 10, true);
+fn setup_mocks_success(strk_play_address: ContractAddress, user: ContractAddress) {
+    setup_mocks_for_buy_ticket(strk_play_address, user, TICKET_PRICE * 10, TICKET_PRICE * 10, true);
 }
 
-fn setup_mocks_insufficient_balance(user: ContractAddress) {
-    setup_mocks_for_buy_ticket(user, TICKET_PRICE / 2, TICKET_PRICE * 10, true);
+fn setup_mocks_insufficient_balance(strk_play_address: ContractAddress, user: ContractAddress) {
+    setup_mocks_for_buy_ticket(strk_play_address, user, TICKET_PRICE / 2, TICKET_PRICE * 10, true);
 }
 
-fn setup_mocks_zero_balance(user: ContractAddress) {
-    setup_mocks_for_buy_ticket(user, 0, TICKET_PRICE * 10, true);
+fn setup_mocks_zero_balance(strk_play_address: ContractAddress, user: ContractAddress) {
+    setup_mocks_for_buy_ticket(strk_play_address, user, 0, TICKET_PRICE * 10, true);
 }
 
-fn setup_mocks_insufficient_allowance(user: ContractAddress) {
-    setup_mocks_for_buy_ticket(user, TICKET_PRICE * 10, 0, true);
+fn setup_mocks_insufficient_allowance(strk_play_address: ContractAddress, user: ContractAddress) {
+    setup_mocks_for_buy_ticket(strk_play_address, user, TICKET_PRICE * 10, 0, true);
 }
 
-fn cleanup_mocks() {
-    stop_mock_call(STRK_PLAY_CONTRACT_ADDRESS, selector!("balance_of"));
-    stop_mock_call(STRK_PLAY_CONTRACT_ADDRESS, selector!("allowance"));
-    stop_mock_call(STRK_PLAY_CONTRACT_ADDRESS, selector!("transfer_from"));
+fn cleanup_mocks(strk_play_address: ContractAddress) {
+    stop_mock_call(strk_play_address, selector!("balance_of"));
+    stop_mock_call(strk_play_address, selector!("allowance"));
+    stop_mock_call(strk_play_address, selector!("transfer_from"));
 }
 
 //=======================================================================================
@@ -118,7 +149,7 @@ fn cleanup_mocks() {
 
 #[test]
 fn test_buy_ticket_successful_single_ticket() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -126,7 +157,7 @@ fn test_buy_ticket_successful_single_ticket() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -139,12 +170,12 @@ fn test_buy_ticket_successful_single_ticket() {
     assert(ticket_count == 1, 'Should have 1 ticket');
 
     // Cleanup mocks
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_multiple_tickets_same_user() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -152,7 +183,7 @@ fn test_buy_multiple_tickets_same_user() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchases
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -165,12 +196,12 @@ fn test_buy_multiple_tickets_same_user() {
     let ticket_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(ticket_count == 3, 'Should have 3 tickets');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_tickets_different_users() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -180,16 +211,16 @@ fn test_buy_tickets_different_users() {
     let numbers = create_valid_numbers();
 
     // Setup mocks for USER1
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers.clone());
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 
     // Setup mocks for USER2
-    setup_mocks_success(USER2);
+    setup_mocks_success(mock_strk_play, USER2);
     cheat_caller_address(lottery_address, USER2, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 
     let user1_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     let user2_count = lottery_dispatcher.GetUserTicketsCount(1, USER2);
@@ -200,7 +231,7 @@ fn test_buy_tickets_different_users() {
 
 #[test]
 fn test_buy_ticket_different_number_combinations() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -208,7 +239,7 @@ fn test_buy_ticket_different_number_combinations() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchases
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Different number combinations
     let mut numbers1 = array![1, 2, 3, 4, 5];
@@ -223,12 +254,12 @@ fn test_buy_ticket_different_number_combinations() {
     let ticket_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(ticket_count == 3, 'Should have 3 tickets');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_event_emission() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -236,7 +267,7 @@ fn test_buy_ticket_event_emission() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
     let mut spy = spy_events();
@@ -248,7 +279,7 @@ fn test_buy_ticket_event_emission() {
     let events = spy.get_events();
     assert(events.events.len() >= 1, 'Should emit events');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -258,7 +289,7 @@ fn test_buy_ticket_event_emission() {
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_invalid_numbers_count_too_few() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -266,7 +297,7 @@ fn test_buy_ticket_invalid_numbers_count_too_few() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Only 4 numbers instead of 5
     let mut numbers = array![1, 2, 3, 4];
@@ -274,13 +305,13 @@ fn test_buy_ticket_invalid_numbers_count_too_few() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_invalid_numbers_count_too_many() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -288,7 +319,7 @@ fn test_buy_ticket_invalid_numbers_count_too_many() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // 6 numbers instead of 5
     let mut numbers = array![1, 2, 3, 4, 5, 6];
@@ -296,13 +327,13 @@ fn test_buy_ticket_invalid_numbers_count_too_many() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_numbers_out_of_range() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -310,7 +341,7 @@ fn test_buy_ticket_numbers_out_of_range() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Number 41 is out of range (max is 40)
     let mut numbers = array![1, 2, 3, 4, 41];
@@ -318,13 +349,13 @@ fn test_buy_ticket_numbers_out_of_range() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_duplicate_numbers() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -332,7 +363,7 @@ fn test_buy_ticket_duplicate_numbers() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Duplicate number 5
     let mut numbers = array![1, 2, 3, 5, 5];
@@ -340,13 +371,13 @@ fn test_buy_ticket_duplicate_numbers() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Insufficient balance')]
 #[test]
 fn test_buy_ticket_insufficient_balance() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -354,20 +385,20 @@ fn test_buy_ticket_insufficient_balance() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for insufficient balance
-    setup_mocks_insufficient_balance(USER1);
+    setup_mocks_insufficient_balance(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'No token balance')]
 #[test]
 fn test_buy_ticket_zero_balance() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -375,20 +406,20 @@ fn test_buy_ticket_zero_balance() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for zero balance
-    setup_mocks_zero_balance(USER1);
+    setup_mocks_zero_balance(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Insufficient allowance')]
 #[test]
 fn test_buy_ticket_insufficient_allowance() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -396,20 +427,20 @@ fn test_buy_ticket_insufficient_allowance() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for insufficient allowance
-    setup_mocks_insufficient_allowance(USER1);
+    setup_mocks_insufficient_allowance(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Draw is not active')]
 #[test]
 fn test_buy_ticket_inactive_draw() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -421,7 +452,7 @@ fn test_buy_ticket_inactive_draw() {
     lottery_dispatcher.DrawNumbers(1);
 
     // Setup mocks for successful ticket purchase (draw validation fails first)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -429,7 +460,7 @@ fn test_buy_ticket_inactive_draw() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -438,7 +469,7 @@ fn test_buy_ticket_inactive_draw() {
 
 #[test]
 fn test_buy_ticket_boundary_numbers() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -446,7 +477,7 @@ fn test_buy_ticket_boundary_numbers() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchases
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Test with minimum and maximum valid numbers
     let mut min_numbers = array![1, 2, 3, 4, 5];
@@ -459,12 +490,12 @@ fn test_buy_ticket_boundary_numbers() {
     let ticket_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(ticket_count == 2, 'Should buy boundary tickets');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_exact_balance() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -472,7 +503,7 @@ fn test_buy_ticket_exact_balance() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for exact balance (same as ticket price)
-    setup_mocks_for_buy_ticket(USER1, TICKET_PRICE, TICKET_PRICE, true);
+    setup_mocks_for_buy_ticket(mock_strk_play, USER1, TICKET_PRICE, TICKET_PRICE, true);
 
     let numbers = create_valid_numbers();
 
@@ -482,7 +513,7 @@ fn test_buy_ticket_exact_balance() {
     let ticket_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(ticket_count == 1, 'Should have 1 ticket');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -491,7 +522,7 @@ fn test_buy_ticket_exact_balance() {
 
 #[test]
 fn test_buy_ticket_balance_updates() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -499,7 +530,7 @@ fn test_buy_ticket_balance_updates() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -510,12 +541,12 @@ fn test_buy_ticket_balance_updates() {
     let ticket_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(ticket_count == 1, 'Should have 1 ticket');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_state_updates() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -523,7 +554,7 @@ fn test_buy_ticket_state_updates() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let initial_ticket_id = lottery_dispatcher.GetTicketCurrentId();
     let initial_user_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
@@ -538,7 +569,7 @@ fn test_buy_ticket_state_updates() {
     assert(final_ticket_id == initial_ticket_id + 1, 'Ticket ID should increment');
     assert(final_user_count == initial_user_count + 1, 'User count should increment');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -548,7 +579,7 @@ fn test_buy_ticket_state_updates() {
 // Edge case test for maximum balance
 #[test]
 fn test_buy_ticket_with_large_balance() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -557,7 +588,7 @@ fn test_buy_ticket_with_large_balance() {
 
     // Setup mocks with very large balance
     let large_balance = 1000000000000000000000_u256; // 1000 tokens
-    setup_mocks_for_buy_ticket(USER1, large_balance, large_balance, true);
+    setup_mocks_for_buy_ticket(mock_strk_play, USER1, large_balance, large_balance, true);
 
     let numbers = create_valid_numbers();
 
@@ -568,14 +599,14 @@ fn test_buy_ticket_with_large_balance() {
     let ticket_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(ticket_count == 1, 'Should have 1 ticket');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 // Invalid draw_id validation tests
 #[should_panic(expected: 'Draw is not active')]
 #[test]
 fn test_buy_ticket_invalid_draw_id_zero() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -583,7 +614,7 @@ fn test_buy_ticket_invalid_draw_id_zero() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -591,13 +622,13 @@ fn test_buy_ticket_invalid_draw_id_zero() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(0, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Draw is not active')]
 #[test]
 fn test_buy_ticket_invalid_draw_id_out_of_range() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -605,7 +636,7 @@ fn test_buy_ticket_invalid_draw_id_out_of_range() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -613,14 +644,14 @@ fn test_buy_ticket_invalid_draw_id_out_of_range() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(9999, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 // Empty or null parameters tests
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_empty_numbers_array() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -628,7 +659,7 @@ fn test_buy_ticket_empty_numbers_array() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Pass empty array of numbers
     let empty_numbers = array![];
@@ -636,13 +667,13 @@ fn test_buy_ticket_empty_numbers_array() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, empty_numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_numbers_with_zero() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -650,7 +681,7 @@ fn test_buy_ticket_numbers_with_zero() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase (validation fails before payment)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Numbers containing zero (invalid)
     let mut numbers = array![0, 1, 2, 3, 4];
@@ -658,13 +689,13 @@ fn test_buy_ticket_numbers_with_zero() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 // Event content and structure validation tests
 #[test]
 fn test_buy_ticket_event_content_validation() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -672,7 +703,7 @@ fn test_buy_ticket_event_content_validation() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
     let mut spy = spy_events();
@@ -690,12 +721,12 @@ fn test_buy_ticket_event_content_validation() {
     let (from, _event) = events.events.at(0);
     assert(from == @lottery_address, 'Event from lottery contract');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_multiple_events_validation() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -703,7 +734,7 @@ fn test_buy_ticket_multiple_events_validation() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchases
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
     let mut spy = spy_events();
@@ -727,12 +758,12 @@ fn test_buy_ticket_multiple_events_validation() {
         i += 1;
     }
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_event_data_consistency() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -740,7 +771,7 @@ fn test_buy_ticket_event_data_consistency() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
     let mut spy = spy_events();
@@ -764,13 +795,13 @@ fn test_buy_ticket_event_data_consistency() {
     let (from, _event) = events.events.at(0);
     assert(from == @lottery_address, 'Event from correct contract');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 // Additional edge case for very large numbers close to limits
 #[test]
 fn test_buy_ticket_stress_test_many_tickets() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -778,7 +809,7 @@ fn test_buy_ticket_stress_test_many_tickets() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchases
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -794,7 +825,7 @@ fn test_buy_ticket_stress_test_many_tickets() {
     let final_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(final_count == 10, 'Should have 10 tickets');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -803,7 +834,7 @@ fn test_buy_ticket_stress_test_many_tickets() {
 
 #[test]
 fn test_buy_ticket_overflow_prevention_excessive_tickets() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -812,7 +843,7 @@ fn test_buy_ticket_overflow_prevention_excessive_tickets() {
 
     // Setup mocks with huge balance to simulate potential overflow scenarios
     let huge_balance = 340282366920938463463374607431768211455_u256; // Max u256
-    setup_mocks_for_buy_ticket(USER1, huge_balance, huge_balance, true);
+    setup_mocks_for_buy_ticket(mock_strk_play, USER1, huge_balance, huge_balance, true);
 
     let numbers = create_valid_numbers();
 
@@ -835,12 +866,12 @@ fn test_buy_ticket_overflow_prevention_excessive_tickets() {
     let final_ticket_id = lottery_dispatcher.GetTicketCurrentId();
     assert(final_ticket_id == 100, 'Ticket IDs should increment');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_balance_overflow_simulation() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -849,7 +880,7 @@ fn test_buy_ticket_balance_overflow_simulation() {
 
     // Setup mocks with maximum possible balance that could cause overflow
     let max_u256 = 340282366920938463463374607431768211455_u256;
-    setup_mocks_for_buy_ticket(USER1, max_u256, max_u256, true);
+    setup_mocks_for_buy_ticket(mock_strk_play, USER1, max_u256, max_u256, true);
 
     let numbers = create_valid_numbers();
 
@@ -861,7 +892,7 @@ fn test_buy_ticket_balance_overflow_simulation() {
     let ticket_count = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(ticket_count == 1, 'Should handle max balance');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -871,7 +902,7 @@ fn test_buy_ticket_balance_overflow_simulation() {
 #[should_panic(expected: 'Draw is not active')]
 #[test]
 fn test_buy_ticket_draw_id_zero_enhanced() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery (this creates draw_id = 1)
@@ -879,7 +910,7 @@ fn test_buy_ticket_draw_id_zero_enhanced() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -887,13 +918,13 @@ fn test_buy_ticket_draw_id_zero_enhanced() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(0, numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Draw is not active')]
 #[test]
 fn test_buy_ticket_draw_id_negative_edge() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -901,7 +932,7 @@ fn test_buy_ticket_draw_id_negative_edge() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
 
@@ -909,7 +940,7 @@ fn test_buy_ticket_draw_id_negative_edge() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(4294967295, numbers); // Max u32
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -919,7 +950,7 @@ fn test_buy_ticket_draw_id_negative_edge() {
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_empty_array_enhanced() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -927,7 +958,7 @@ fn test_buy_ticket_empty_array_enhanced() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks (validation should fail before payment processing)
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Pass completely empty array
     let empty_numbers = array![];
@@ -935,13 +966,13 @@ fn test_buy_ticket_empty_array_enhanced() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, empty_numbers);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[should_panic(expected: 'Invalid numbers')]
 #[test]
 fn test_buy_ticket_single_element_array() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -949,7 +980,7 @@ fn test_buy_ticket_single_element_array() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     // Pass array with single element (invalid)
     let single_number = array![1];
@@ -957,7 +988,7 @@ fn test_buy_ticket_single_element_array() {
     cheat_caller_address(lottery_address, USER1, CheatSpan::TargetCalls(1));
     lottery_dispatcher.BuyTicket(1, single_number);
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 //=======================================================================================
@@ -966,7 +997,7 @@ fn test_buy_ticket_single_element_array() {
 
 #[test]
 fn test_buy_ticket_event_ticketpurchased_structure() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -974,7 +1005,7 @@ fn test_buy_ticket_event_ticketpurchased_structure() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
     let mut spy = spy_events();
@@ -1001,12 +1032,12 @@ fn test_buy_ticket_event_ticketpurchased_structure() {
     assert(final_ticket_id == initial_ticket_id + 1, 'Ticket ID incremented');
     assert(user_tickets == 1, 'User has 1 ticket');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_event_fields_validation() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -1014,7 +1045,7 @@ fn test_buy_ticket_event_fields_validation() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchase
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers = create_valid_numbers();
     let mut spy = spy_events();
@@ -1038,12 +1069,12 @@ fn test_buy_ticket_event_fields_validation() {
     let user_ticket_count = lottery_dispatcher.GetUserTicketsCount(expected_draw_id, expected_user);
     assert(user_ticket_count == 1, 'User should have 1 ticket');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_multiple_events_structure() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -1051,7 +1082,7 @@ fn test_buy_ticket_multiple_events_structure() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchases
-    setup_mocks_success(USER1);
+    setup_mocks_success(mock_strk_play, USER1);
 
     let numbers1 = array![1, 2, 3, 4, 5];
     let numbers2 = array![6, 7, 8, 9, 10];
@@ -1082,12 +1113,12 @@ fn test_buy_ticket_multiple_events_structure() {
     let final_user_tickets = lottery_dispatcher.GetUserTicketsCount(1, USER1);
     assert(final_user_tickets == 3, 'User should have 3 tickets');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
 
 #[test]
 fn test_buy_ticket_event_ordering_consistency() {
-    let lottery_address = deploy_lottery();
+    let (lottery_address, mock_strk_play, _mock_vault) = deploy_lottery();
     let lottery_dispatcher = ILotteryDispatcher { contract_address: lottery_address };
 
     // Initialize lottery
@@ -1095,8 +1126,8 @@ fn test_buy_ticket_event_ordering_consistency() {
     lottery_dispatcher.Initialize(TICKET_PRICE, INITIAL_JACKPOT);
 
     // Setup mocks for successful ticket purchases
-    setup_mocks_success(USER1);
-    setup_mocks_success(USER2);
+    setup_mocks_success(mock_strk_play, USER1);
+    setup_mocks_success(mock_strk_play, USER2);
 
     let numbers = create_valid_numbers();
     let mut spy = spy_events();
@@ -1126,5 +1157,5 @@ fn test_buy_ticket_event_ordering_consistency() {
     assert(final_tickets_user1 == initial_tickets_user1 + 2, 'User1 should have +2 tickets');
     assert(final_tickets_user2 == initial_tickets_user2 + 1, 'User2 should have +1 ticket');
 
-    cleanup_mocks();
+    cleanup_mocks(mock_strk_play);
 }
