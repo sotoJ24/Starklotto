@@ -1,15 +1,45 @@
 //Test for ISSUE-TEST-CU01-003
 
+use contracts::StarkPlayERC20::{IMintableDispatcher, IMintableDispatcherTrait};
+use contracts::StarkPlayVault::{IStarkPlayVaultDispatcher, IStarkPlayVaultDispatcherTrait};
 use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address};
 use starknet::{ContractAddress, contract_address_const};
 
 fn setup_lottery() -> ContractAddress {
+    // Deploy mock contracts first
+    let mock_strk_play = deploy_mock_strk_play();
+    let mock_vault = deploy_mock_vault(mock_strk_play.contract_address);
+    
     let lottery = declare("Lottery").unwrap().contract_class();
     let admin: ContractAddress = contract_address_const::<'owner'>();
-    let init_data = array![admin.into()];
+    let init_data = array![
+        admin.into(),
+        mock_strk_play.contract_address.into(),
+        mock_vault.contract_address.into()
+    ];
     let (lottery_address, _) = lottery.deploy(@init_data).unwrap();
     lottery_address
+}
+
+fn deploy_mock_strk_play() -> IMintableDispatcher {
+    let starkplay_contract = declare("StarkPlayERC20").unwrap().contract_class();
+    let starkplay_constructor_calldata = array![
+        contract_address_const::<'owner'>().into(), contract_address_const::<'owner'>().into(),
+    ]; // recipient and admin
+    let (starkplay_address, _) = starkplay_contract
+        .deploy(@starkplay_constructor_calldata)
+        .unwrap();
+    IMintableDispatcher { contract_address: starkplay_address }
+}
+
+fn deploy_mock_vault(strk_play_address: ContractAddress) -> IStarkPlayVaultDispatcher {
+    let vault_contract = declare("StarkPlayVault").unwrap().contract_class();
+    let vault_constructor_calldata = array![
+        contract_address_const::<'owner'>().into(), strk_play_address.into(), 50_u64.into(),
+    ]; // owner, starkPlayToken, feePercentage
+    let (vault_address, _) = vault_contract.deploy(@vault_constructor_calldata).unwrap();
+    IStarkPlayVaultDispatcher { contract_address: vault_address }
 }
 
 #[test]
@@ -20,9 +50,17 @@ fn should_declare_contract() {
 
 #[test]
 fn should_deploy_contract() {
+    // Deploy mock contracts first
+    let mock_strk_play = deploy_mock_strk_play();
+    let mock_vault = deploy_mock_vault(mock_strk_play.contract_address);
+    
     let lottery = declare("Lottery").unwrap().contract_class();
     let admin = contract_address_const::<'owner'>();
-    let init_data = array![admin.into()];
+    let init_data = array![
+        admin.into(),
+        mock_strk_play.contract_address.into(),
+        mock_vault.contract_address.into()
+    ];
     let (lottery_address, _) = lottery.deploy(@init_data).unwrap();
     assert(lottery_address != contract_address_const::<0>(), 'Contract deployment');
 }
