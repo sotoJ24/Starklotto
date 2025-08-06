@@ -84,13 +84,13 @@ fn deploy_lottery() -> (ContractAddress, ContractAddress, ContractAddress) {
     // Deploy mock contracts first
     let mock_strk_play = deploy_mock_strk_play();
     let mock_vault = deploy_mock_vault(mock_strk_play);
-    
+
     let mut calldata = array![];
     calldata.append_serde(owner_address()); // owner
     calldata.append_serde(mock_strk_play); // strkPlayContractAddress
     calldata.append_serde(mock_vault); // strkPlayVaultContractAddress
     let lottery_address = declare_and_deploy("Lottery", calldata);
-    
+
     (lottery_address, mock_strk_play, mock_vault)
 }
 
@@ -106,7 +106,10 @@ fn create_valid_numbers() -> Array<u16> {
 
 fn setup_mocks_for_buy_ticket(
     strk_play_address: ContractAddress,
-    user: ContractAddress, user_balance: u256, allowance: u256, transfer_success: bool,
+    user: ContractAddress,
+    user_balance: u256,
+    allowance: u256,
+    transfer_success: bool,
 ) {
     // Mock balance_of call
     start_mock_call(strk_play_address, selector!("balance_of"), user_balance);

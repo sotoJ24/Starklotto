@@ -99,7 +99,7 @@ pub trait ILottery<TContractState> {
     fn GetJackpotEntryEndTime(self: @TContractState, drawId: u64) -> u64;
     fn GetJackpotEntryIsActive(self: @TContractState, drawId: u64) -> bool;
     fn GetJackpotEntryIsCompleted(self: @TContractState, drawId: u64) -> bool;
-    
+
     // Dynamic address getters
     fn GetStarkPlayContractAddress(self: @TContractState) -> ContractAddress;
     fn GetStarkPlayVaultContractAddress(self: @TContractState) -> ContractAddress;
@@ -239,15 +239,17 @@ pub mod Lottery {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, 
+        ref self: ContractState,
         owner: ContractAddress,
         strkPlayContractAddress: ContractAddress,
         strkPlayVaultContractAddress: ContractAddress,
     ) {
         // Validate that addresses are not zero address
         assert(strkPlayContractAddress != contract_address_const::<0>(), 'Invalid STRKP contract');
-        assert(strkPlayVaultContractAddress != contract_address_const::<0>(), 'Invalid Vault contract');
-        
+        assert(
+            strkPlayVaultContractAddress != contract_address_const::<0>(), 'Invalid Vault contract',
+        );
+
         self.ownable.initializer(owner);
         self.fixedPrize4Matches.write(4000000000000000000);
         self.fixedPrize3Matches.write(3000000000000000000);
@@ -255,7 +257,7 @@ pub mod Lottery {
         self.currentDrawId.write(0);
         self.currentTicketId.write(0);
         self.reentrancy_guard.write(false);
-        
+
         // Store dynamic contract addresses
         self.strkPlayContractAddress.write(strkPlayContractAddress);
         self.strkPlayVaultContractAddress.write(strkPlayVaultContractAddress);
@@ -711,14 +713,14 @@ pub mod Lottery {
             let draw = self.draws.entry(drawId).read();
             !draw.isActive
         }
-        
+
         //=======================================================================================
         // Dynamic address getters
         //=======================================================================================
         fn GetStarkPlayContractAddress(self: @ContractState) -> ContractAddress {
             self.strkPlayContractAddress.read()
         }
-        
+
         fn GetStarkPlayVaultContractAddress(self: @ContractState) -> ContractAddress {
             self.strkPlayVaultContractAddress.read()
         }
@@ -794,7 +796,8 @@ pub mod Lottery {
         let mut usedNumbers: Felt252Dict<bool> = Default::default();
 
         while count != 5 {
-            let number = (blockTimestamp + count) % (MaxNumber.into() - MinNumber.into() + 1) + MinNumber.into();
+            let number = (blockTimestamp + count) % (MaxNumber.into() - MinNumber.into() + 1)
+                + MinNumber.into();
             let number_u16: u16 = number.try_into().unwrap();
 
             if usedNumbers.get(number.into()) != true {

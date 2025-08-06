@@ -21,7 +21,7 @@ fn deploy_lottery() -> ContractAddress {
     // Deploy mock contracts first
     let mock_strk_play = deploy_mock_strk_play();
     let mock_vault = deploy_mock_vault(mock_strk_play.contract_address);
-    
+
     let mut constructor_calldata = array![];
     OWNER().serialize(ref constructor_calldata);
     mock_strk_play.contract_address.serialize(ref constructor_calldata);
