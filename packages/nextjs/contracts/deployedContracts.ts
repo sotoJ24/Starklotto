@@ -7,7 +7,7 @@ const deployedContracts = {
   devnet: {
     Lottery: {
       address:
-        "0x59980036167c5b1f0e8dee0e19c10c70d830b69e00ebf91b9e1bbdbc3d7b1c1",
+        "0x6a6627f0e1137834f3d62a30e30562e5ad03e2477ba5f15792d980dca24976a",
       abi: [
         {
           type: "impl",
@@ -869,7 +869,7 @@ const deployedContracts = {
     },
     StarkPlayERC20: {
       address:
-        "0x30cf9bb4a9d593e0cf2ca4f65dbd5e84b04110b7308a66c8fe82bdbdc3b6b68",
+        "0x1b3ec874f1ec829f70030aedb416e8aa0c4368915934c63f2c5aba5c54c5838",
       abi: [
         {
           type: "impl",
@@ -2051,7 +2051,7 @@ const deployedContracts = {
     },
     StarkPlayVault: {
       address:
-        "0x4664e64e67ab0f1606d21c43e67ccf604a056415f7728f7c49e76d89cd62dd4",
+        "0x485e57f383a850e7f150a19665885cc04167f398a4377020b79e6cff2b5ffd",
       abi: [
         {
           type: "impl",
@@ -2797,7 +2797,7 @@ const deployedContracts = {
     },
     LottoTicketNFT: {
       address:
-        "0x7ab84e5e6c6800a1c815a352a40a2b41255adb2600d28fdb13b4558f78f253",
+        "0x73cec191601b14130c899864913cef874be4d3c8fb2997c4a5c57c95cb6e04b",
       abi: [
         {
           type: "impl",
