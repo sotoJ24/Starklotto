@@ -79,6 +79,7 @@ fn deploy_contract_lottery() -> ContractAddress {
     let (lottery_address, _) = lottery_contract.deploy(@lottery_constructor_calldata).unwrap();
     lottery_address
 }
+
 fn deploy_mock_strk_token() -> IMintableDispatcher {
     // Deploy the mock STRK token at the exact constant address that the vault expects
     let target_address: ContractAddress =
