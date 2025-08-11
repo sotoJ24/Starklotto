@@ -36,7 +36,7 @@ jobs:
 
       # Diagnóstico previo: lista todos los tests detectados
       - name: List tests
-        run: snforge test --list
+        run: snforge test -- --list
         working-directory: ./packages/snfoundry/contracts
 
       # Ejecuta tests en modo verbose, imprime logs y stacktrace si algo falla.
