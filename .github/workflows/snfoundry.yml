@@ -41,10 +41,9 @@ jobs:
 
       # Ejecuta tests en modo verbose, imprime logs y stacktrace si algo falla.
       # SNFORGE_FORMAT=pretty fuerza salida legible (no JSON), evitando parsers aguas abajo.
-      - name: Run snfoundry tests (verbose + backtrace)
+      - name: Run snfoundry tests (verbose + logs)
         env:
           RUST_BACKTRACE: 1
           SNFORGE_FORMAT: pretty
-        run: |
-          snforge test -v --print-logs
+        run: snforge test -- -v --print-logs
         working-directory: ./packages/snfoundry/contracts
