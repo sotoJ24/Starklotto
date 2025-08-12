@@ -66,7 +66,7 @@ pub mod StarkPlayVault {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //constants
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    const TOKEN_STRK_ADDRESS: felt252 =
+    const FELT_STRK_CONTRACT: felt252 =
         0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d;
     const Initial_Fee_Percentage: u64 = 50_u64; // 50 basis points = 0.5%
     const BASIS_POINTS_DENOMINATOR: u256 = 10000_u256; // 10000 basis points = 100%
@@ -117,7 +117,7 @@ pub mod StarkPlayVault {
         feePercentage: u64,
         treasury_address: ContractAddress,
     ) {
-        self.strkToken.write(TOKEN_STRK_ADDRESS);
+        self.strkToken.write(FELT_STRK_CONTRACT);
         self.starkPlayToken.write(starkPlayToken);
         self.owner.write(starknet::get_caller_address());
         self.ownable.initializer(owner);
@@ -311,7 +311,7 @@ pub mod StarkPlayVault {
     //private functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     fn _check_user_balance(self: @ContractState, user: ContractAddress, amountSTRK: u256) -> bool {
-        let strk_contract_address = contract_address_const::<TOKEN_STRK_ADDRESS>();
+        let strk_contract_address = contract_address_const::<FELT_STRK_CONTRACT>();
         let strk_dispatcher = IERC20Dispatcher { contract_address: strk_contract_address };
         let balance = strk_dispatcher.balance_of(user);
 
@@ -330,7 +330,7 @@ pub mod StarkPlayVault {
     }
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     fn _transfer_strk(self: @ContractState, user: ContractAddress, amountSTRK: u256) -> bool {
-        let strk_contract_address = contract_address_const::<TOKEN_STRK_ADDRESS>();
+        let strk_contract_address = contract_address_const::<FELT_STRK_CONTRACT>();
         let strk_dispatcher = IERC20Dispatcher { contract_address: strk_contract_address };
         strk_dispatcher.transfer_from(user, get_contract_address(), amountSTRK);
         true
@@ -423,7 +423,7 @@ pub mod StarkPlayVault {
             );
 
         // Transfer the net amount (after deducting fee) to user
-        let strk_contract_address = contract_address_const::<TOKEN_STRK_ADDRESS>();
+        let strk_contract_address = contract_address_const::<FELT_STRK_CONTRACT>();
         let strk_dispatcher = IERC20Dispatcher { contract_address: strk_contract_address };
         strk_dispatcher.transfer(self.treasury_address.read(), prizeFeeAmount);
         strk_dispatcher.transfer(user, netAmount);
@@ -594,7 +594,7 @@ pub mod StarkPlayVault {
             let current_fees = self.accumulatedFee.read();
             assert(amount > 0, 'Amount must be > 0');
             assert(amount <= current_fees, 'Withdraw amount exceeds fees');
-            let strk_contract_address = contract_address_const::<TOKEN_STRK_ADDRESS>();
+            let strk_contract_address = contract_address_const::<FELT_STRK_CONTRACT>();
             let strk_dispatcher = IERC20Dispatcher { contract_address: strk_contract_address };
             let contract_balance = strk_dispatcher.balance_of(get_contract_address());
             assert(contract_balance >= amount, 'Insufficient STRK in vault');
@@ -611,7 +611,7 @@ pub mod StarkPlayVault {
             let current_fees = self.accumulatedPrizeConversionFees.read();
             assert(amount > 0, 'Amount must be > 0');
             assert(amount <= current_fees, 'Withdraw amount exceeds fees');
-            let strk_contract_address = contract_address_const::<TOKEN_STRK_ADDRESS>();
+            let strk_contract_address = contract_address_const::<FELT_STRK_CONTRACT>();
             let strk_dispatcher = IERC20Dispatcher { contract_address: strk_contract_address };
             let contract_balance = strk_dispatcher.balance_of(get_contract_address());
             assert(contract_balance >= amount, 'Insufficient STRK in vault');
